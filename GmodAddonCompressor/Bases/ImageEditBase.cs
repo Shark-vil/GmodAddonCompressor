@@ -11,8 +11,8 @@ namespace GmodAddonCompressor.Bases
 {
     internal abstract class ImageEditBase
     {
-        // 64, 256, 512
-        private const int _minimumSizeLimit = 256;
+        // 64, 128, 256, 512
+        private static uint _minimumSizeLimit = 256;
 
         protected int _resolution = 4;
         protected string _fileExtension = string.Empty;
@@ -24,6 +24,11 @@ namespace GmodAddonCompressor.Bases
             {
                 _resolution = value < 2 ? 2 : value > 6 ? 6 : value;
             }
+        }
+
+        internal static void SetMinimumSizeLimit(uint sizeLimit)
+        {
+            _minimumSizeLimit = sizeLimit;
         }
 
         protected async Task ImageCompress(string imageFilePath)
@@ -71,10 +76,7 @@ namespace GmodAddonCompressor.Bases
                 int newWidth = currentWidth / _resolution;
                 int newHeight = currentHeight / _resolution;
 
-                if (!SaveBitmap(tempImageFilePath, imageFilePath, newWidth, newHeight) && _resolution != 2)
-                {
-                    SaveBitmap(tempImageFilePath, imageFilePath, currentWidth / 2, currentHeight / 2);
-                }
+                SaveBitmap(tempImageFilePath, imageFilePath, newWidth, newHeight);
             }
 
             await Task.Yield();
@@ -93,24 +95,24 @@ namespace GmodAddonCompressor.Bases
             _fileExtension = fileExtension;
         }
 
-        protected bool SaveBitmap(string imageSourcePath, string imageSavePath, int newWidth, int newHeight)
+        protected void SaveBitmap(string imageSourcePath, string imageSavePath, int newWidth, int newHeight)
         {
-            if (newWidth >= _minimumSizeLimit && newHeight >= _minimumSizeLimit)
+            if (newWidth < _minimumSizeLimit || newHeight < _minimumSizeLimit)
             {
-                using (var image = new MagickImage(imageSourcePath))
-                {
-                    var size = new MagickGeometry(newWidth, newHeight);
-                    size.IgnoreAspectRatio = true;
-
-                    image.Resize(size);
-                    image.SetCompression(CompressionMethod.LZMA);
-                    image.Write(imageSavePath);
-                }
-
-                return true;
+                newWidth = (int)_minimumSizeLimit;
+                newHeight = (int)_minimumSizeLimit;
             }
 
-            return false;
+            using (var image = new MagickImage(imageSourcePath))
+            {
+                var size = new MagickGeometry(newWidth, newHeight);
+                size.IgnoreAspectRatio = false;
+                //size.IgnoreAspectRatio = true;
+
+                image.Resize(size);
+                image.SetCompression(CompressionMethod.LZMA);
+                image.Write(imageSavePath);
+            }
         }
     }
 }

@@ -22,6 +22,7 @@ namespace GmodAddonCompressor.DataContexts
         private bool _compressJPG = true;
         private bool _compressPNG = true;
         private bool _compressLUA = true;
+        private uint _imageSizeLimit = 512;
         private int _wavRate = 22050;
         private int _wavRateListIndex = 2;
         private int _imageReducingResolutionListIndex = 1;
@@ -37,6 +38,20 @@ namespace GmodAddonCompressor.DataContexts
             22050,
             16000
         };
+
+        public uint ImageSizeLimit
+        {
+            get { return _imageSizeLimit; }
+            set
+            {
+                if (value == 0)
+                    _imageSizeLimit = 1;
+                else
+                    _imageSizeLimit = value;
+
+                OnPropertyChanged();
+            }
+        }
 
         public int ImageReducingResolutionListIndex
         {

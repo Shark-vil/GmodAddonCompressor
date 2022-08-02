@@ -1,4 +1,5 @@
-﻿using GmodAddonCompressor.DataContexts;
+﻿using GmodAddonCompressor.Bases;
+using GmodAddonCompressor.DataContexts;
 using GmodAddonCompressor.Helpres;
 using GmodAddonCompressor.Systems;
 using System;
@@ -39,6 +40,8 @@ namespace GmodAddonCompressor
 
             if (Directory.Exists(addonDirectoryPath))
             {
+                ImageEditBase.SetMinimumSizeLimit(Context.ImageSizeLimit);
+
                 var compressSystem = new CompressAddonSystem(addonDirectoryPath);
 
                 if (Context.CompressVTF) compressSystem.IncludeVTF();
