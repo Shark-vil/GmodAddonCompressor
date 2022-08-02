@@ -56,21 +56,6 @@ namespace GmodAddonCompressor.Bases
 
                         currentWidth = original.Width;
                         currentHeight = original.Height;
-
-                        //int newWidth = currentWidth / _resolution;
-                        //int newHeight = currentHeight / _resolution;
-
-                        /*
-                        if (!SaveBitmap(imageFilePath, original, newWidth, newHeight) && _resolution != 2)
-                        {
-                            SaveBitmap(imageFilePath, original, currentWidth / 2, currentHeight / 2);
-                        }
-                        */
-
-                        //if (!SaveBitmap(tempImageFilePath, imageFilePath, newWidth, newHeight) && _resolution != 2)
-                        //{
-                        //    SaveBitmap(tempImageFilePath, imageFilePath, currentWidth / 2, currentHeight / 2);
-                        //}
                     }
                     catch (Exception ex)
                     {
@@ -98,26 +83,6 @@ namespace GmodAddonCompressor.Bases
             {
                 if (!File.Exists(imageFilePath))
                     File.Copy(tempImageFilePath, imageFilePath);
-                /*
-                else
-                {
-                    Console.WriteLine($"Compress image: {imageFilePath}");
-
-                    try
-                    {
-                        var file = new FileInfo(imageFilePath);
-
-                        var optimizer = new ImageOptimizer();
-                        optimizer.Compress(file);
-
-                        file.Refresh();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex);
-                    }
-                }
-                */
 
                 File.Delete(tempImageFilePath);
             }
@@ -147,26 +112,5 @@ namespace GmodAddonCompressor.Bases
 
             return false;
         }
-
-        /*
-        protected bool SaveBitmap(string imageFilePath, Bitmap original, int newWidth, int newHeight)
-        {
-            if (newWidth >= _minimumSizeLimit && newHeight >= _minimumSizeLimit)
-            {
-                Size imageSize = new Size(newWidth, newHeight);
-
-                using (var resized = new Bitmap(original, imageSize))
-                {
-                    resized.Save(imageFilePath);
-
-                    Console.WriteLine($"Resize image: {imageFilePath}");
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-        */
     }
 }
