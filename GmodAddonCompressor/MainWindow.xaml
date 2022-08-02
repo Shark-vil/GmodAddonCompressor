@@ -5,7 +5,28 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GmodAddonCompressor"
         mc:Ignorable="d" ResizeMode="NoResize"
+        Background="#424242"
         Title="Garry's Mod - Resources Compress" Height="300" Width="570">
+    <Window.Resources>
+        <Style x:Key="DarkButton" TargetType="Button">
+            <Setter Property="FontFamily" Value="Verdana" />
+            <Setter Property="Background" Value="#81bbaa" />
+            <Setter Property="Foreground" Value="Black" />
+        </Style>
+        <Style x:Key="DarkLabel" TargetType="Label">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style x:Key="DarkCheckBox" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style x:Key="DarkTextBlock" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style x:Key="DarkProgressBar" TargetType="ProgressBar">
+            <Setter Property="Foreground" Value="#5f9310" />
+            <Setter Property="Background" Value="#00050f" />
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition></RowDefinition>
@@ -34,6 +55,7 @@
 
                     <Grid Grid.Column="0">
                         <Button x:Name="Button_SelectDirectory"
+                            Style="{StaticResource DarkButton}"
                             IsEnabled="{Binding UnlockedUI}"
                             Content="Select"/>
                     </Grid>
@@ -41,6 +63,7 @@
 
                 <Grid Margin="0, 10, 0, 0">
                     <Button x:Name="Button_Compress"
+                        Style="{StaticResource DarkButton}"
                         IsEnabled="{Binding UnlockedUI}"
                         Content="Compress" 
                         Height="24"/>
@@ -48,17 +71,20 @@
 
                 <Grid Height="19" Margin="0, 20, 0, 0">
                     <ProgressBar x:Name="ProgressBar_Compress"
+                        Style="{StaticResource DarkProgressBar}"
                         Minimum="{Binding ProgressBarMinValue}"
                         Maximum="{Binding ProgressBarMaxValue}"
                         Value="{Binding ProgressBarValue}"/>
 
-                    <TextBlock 
+                    <TextBlock
+                        Style="{StaticResource DarkTextBlock}"
                         HorizontalAlignment="Center" 
                         VerticalAlignment="Center" 
                         Text="{Binding ProgressBarText}"/>
                 </Grid>
 
                 <CheckBox
+                    Style="{StaticResource DarkCheckBox}"
                     Margin="0, 80, 0, 5"
                     Content="Debug Console"
                     Checked="CheckBox_EnableDebugConsole"
@@ -71,6 +97,7 @@
 
                 <StackPanel Orientation="Horizontal">
                     <CheckBox
+                        Style="{StaticResource DarkCheckBox}"
                         Margin="0, 5, 0, 5"
                         Content="WAV"
                         HorizontalAlignment="Left"
@@ -86,6 +113,7 @@
                 </StackPanel>
 
                 <Label
+                    Style="{StaticResource DarkLabel}"
                     Margin="0, 5, 0, 5"
                     Content="Rate (Hz)" 
                     HorizontalAlignment="Left"
@@ -100,18 +128,21 @@
 
                 <StackPanel Orientation="Horizontal">
                     <CheckBox
+                        Style="{StaticResource DarkCheckBox}"
                         Margin="0, 5, 0, 5"
                         Content="VTF" 
                         HorizontalAlignment="Left"
                         IsChecked="{Binding CompressVTF}"/>
 
                     <CheckBox
+                        Style="{StaticResource DarkCheckBox}"
                         Margin="20, 5, 0, 5"
                         Content="JPG"
                         HorizontalAlignment="Left"
                         IsChecked="{Binding CompressJPG}"/>
 
                     <CheckBox
+                        Style="{StaticResource DarkCheckBox}"
                         Margin="20, 5, 0, 5"
                         Content="PNG"
                         HorizontalAlignment="Left"
@@ -119,6 +150,7 @@
                 </StackPanel>
 
                 <Label
+                    Style="{StaticResource DarkLabel}"
                     Margin="0, 5, 0, 5"
                     HorizontalAlignment="Left"
                     Content="Reducing resolution (2x, 4x)" 
@@ -133,6 +165,7 @@
 
                 <StackPanel Orientation="Horizontal">
                     <TextBlock 
+                        Style="{StaticResource DarkTextBlock}"
                         Margin="5, 0, 15, 0"
                         Text="Size limit:" 
                         VerticalAlignment="Center" />
@@ -147,13 +180,15 @@
 
                 <StackPanel Orientation="Horizontal">
                     <TextBlock 
+                        Style="{StaticResource DarkTextBlock}"
                         Margin="5, 0, 15, 0"
                         Text="Current size limit:" 
                         VerticalAlignment="Center" />
 
                     <TextBlock
-                            Text="{Binding ImageSizeLimit}" 
-                            VerticalAlignment="Center" />
+                        Style="{StaticResource DarkTextBlock}"
+                        Text="{Binding ImageSizeLimit}" 
+                        VerticalAlignment="Center" />
                 </StackPanel>
             </StackPanel>
         </Grid>
@@ -161,6 +196,7 @@
         <Grid Grid.Column="2" Grid.Row="0" Margin="5, 10, 5, 10">
             <StackPanel Orientation="Vertical">
                 <CheckBox
+                    Style="{StaticResource DarkCheckBox}"
                     Margin="20, 5, 0, 5"
                     Content="LUA"
                     HorizontalAlignment="Left"
