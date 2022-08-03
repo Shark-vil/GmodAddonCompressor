@@ -88,7 +88,7 @@ namespace GmodAddonCompressor.Bases
                 int newWidth = currentWidth / _resolution;
                 int newHeight = currentHeight / _resolution;
 
-                SaveBitmap(tempImageFilePath, imageFilePath, newWidth, newHeight);
+                await SaveMagickImage(tempImageFilePath, imageFilePath, newWidth, newHeight);
             }
 
             await Task.Yield();
@@ -120,43 +120,49 @@ namespace GmodAddonCompressor.Bases
             _fileExtension = fileExtension;
         }
 
-        protected void SaveBitmap(string imageSourcePath, string imageSavePath, int newWidth, int newHeight)
+        private async Task SaveMagickImage(string imageSourcePath, string imageSavePath, int newWidth, int newHeight)
         {
+            int resizeWidth = newWidth;
+            int resizeHeight = newHeight;
+
             if (newWidth < _minimumSizeLimit || newHeight < _minimumSizeLimit)
             {
-                newWidth = (int)_minimumSizeLimit;
-                newHeight = (int)_minimumSizeLimit;
+                resizeWidth = (int)_minimumSizeLimit;
+                resizeHeight = (int)_minimumSizeLimit;
             }
 
             using (var image = new MagickImage(imageSourcePath))
             {
-                var size = new MagickGeometry(newWidth, newHeight);
-                size.IgnoreAspectRatio = false;
+                try
+                {
+                    var size = new MagickGeometry(resizeWidth, resizeHeight);
+                    size.IgnoreAspectRatio = false;
 
-                image.Resize(size);
-
-                //if (_fileExtension == "jpg" || _fileExtension == "jpeg")
-                //    image.SetCompression(CompressionMethod.JPEG);
-                //else
-                //    image.SetCompression(CompressionMethod.LZMA);
-
-                image.SetCompression(CompressionMethod.LZMA);
-                image.Write(imageSavePath);
+                    image.Resize(size);
+                    image.SetCompression(CompressionMethod.LZMA);
+                    image.Write(imageSavePath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
             }
 
-            //try
-            //{
-            //    FileInfo file = new FileInfo(imageSavePath);
+            await Task.Yield();
 
-            //    var optimizer = new ImageOptimizer();
-            //    optimizer.LosslessCompress(file);
+            try
+            {
+                FileInfo file = new FileInfo(imageSavePath);
 
-            //    file.Refresh();
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine(ex);
-            //}
+                var optimizer = new ImageOptimizer();
+                optimizer.LosslessCompress(file);
+
+                file.Refresh();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
     }
 }
