@@ -128,7 +128,7 @@ namespace GmodAddonCompressor.Systems
             {
                 string filePath = file.FullName;
 
-                Console.WriteLine($"Target file: {filePath.Replace(_directoryPath, string.Empty)}");
+                //Console.WriteLine($"Target file: {filePath.Replace(_directoryPath, string.Empty)}");
 
                 switch (file.Extension)
                 {

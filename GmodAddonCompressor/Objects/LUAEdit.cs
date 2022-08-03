@@ -46,10 +46,9 @@ namespace GmodAddonCompressor.Objects
                 string luaCode = await File.ReadAllTextAsync(luaFilePath);
                 string newLuaCode = (string)F_LuaMinifer.Call(luaCode).First();
                 if (!string.IsNullOrEmpty(newLuaCode))
-                {
                     await File.WriteAllTextAsync(luaFilePath, newLuaCode);
-                    Console.WriteLine($"Optimization LUA: {luaFilePath}");
-                }
+                else
+                    Console.WriteLine($"LUA compression failed: {luaFilePath}");
             }
             catch (Exception ex)
             {

@@ -38,19 +38,19 @@ namespace GmodAddonCompressor.Objects
 
                 if (currentRate > _rateNumber)
                 {
-                    //var newFormat = new WaveFormat(_rateNumber, 16, 1);
-
-                    var newFormat = new WaveFormat(
-                        _rateNumber,
-                        reader.WaveFormat.BitsPerSample, // 16
-                        reader.WaveFormat.Channels // 1
-                    );
+                    var newFormat = new WaveFormat(_rateNumber, 16, 1);
 
                     try
                     {
-                        using (var conversionStream = new WaveFormatConversionStream(newFormat, reader))
+                        using (var stream = new MemoryStream())
                         {
-                            WaveFileWriter.CreateWaveFile(newWavFilePath, conversionStream);
+                            using (var s = new RawSourceWaveStream(stream, newFormat))
+                            {
+                                using (var c = new WaveFormatConversionStream(WaveFormat.CreateALawFormat(_rateNumber, 1), s))
+                                {
+                                    WaveFileWriter.CreateWaveFile(newWavFilePath, c);
+                                }
+                            }
                         }
                     }
                     catch (Exception ex)

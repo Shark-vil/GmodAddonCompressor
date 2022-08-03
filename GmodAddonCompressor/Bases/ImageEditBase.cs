@@ -49,12 +49,8 @@ namespace GmodAddonCompressor.Bases
             if (!File.Exists(tempImageFilePath))
                 File.Copy(imageFilePath, tempImageFilePath);
 
-            await Task.Yield();
-
             if (File.Exists(imageFilePath))
                 File.Delete(imageFilePath);
-
-            await Task.Yield();
 
             int currentWidth = 0;
             int currentHeight = 0;
@@ -83,15 +79,11 @@ namespace GmodAddonCompressor.Bases
                 && (_skipHeight == 0 || currentHeight > _skipHeight)
             )
             {
-                await Task.Yield();
-
                 int newWidth = currentWidth / _resolution;
                 int newHeight = currentHeight / _resolution;
 
                 await SaveMagickImage(tempImageFilePath, imageFilePath, newWidth, newHeight);
             }
-
-            await Task.Yield();
 
             if (File.Exists(tempImageFilePath))
             {
@@ -148,20 +140,45 @@ namespace GmodAddonCompressor.Bases
                 }
             }
 
-            await Task.Yield();
+            long oldFileSize = -1;
+            DateTime timeOut = DateTime.UtcNow.AddSeconds(5);
+
+            while (oldFileSize == -1 && DateTime.UtcNow > timeOut)
+            {
+                try
+                {
+                    oldFileSize = new FileInfo(imageSavePath).Length;
+                }
+                catch
+                {
+                    await Task.Yield();
+                }
+            }
+
+            string additionalCompressionFilePath = imageSavePath + "_LC." + _fileExtension;
+            File.Copy(imageSavePath, additionalCompressionFilePath);
 
             try
             {
-                FileInfo file = new FileInfo(imageSavePath);
+                FileInfo file = new FileInfo(additionalCompressionFilePath);
 
                 var optimizer = new ImageOptimizer();
                 optimizer.LosslessCompress(file);
 
                 file.Refresh();
+
+                if (file.Length > oldFileSize)
+                    File.Delete(additionalCompressionFilePath);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+            }
+
+            if (File.Exists(additionalCompressionFilePath))
+            {
+                File.Delete(imageSavePath);
+                File.Copy(additionalCompressionFilePath, imageSavePath);
             }
         }
     }
