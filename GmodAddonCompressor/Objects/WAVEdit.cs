@@ -23,11 +23,7 @@ namespace GmodAddonCompressor.Objects
 
         internal async Task WavCompress(string wavFilePath)
         {
-            string tempWavFilePath = wavFilePath + "_temp.wav";
             string newWavFilePath = wavFilePath + "_new.wav";
-
-            if (!File.Exists(tempWavFilePath))
-                File.Copy(wavFilePath, tempWavFilePath);
 
             await Task.Yield();
 
@@ -39,8 +35,6 @@ namespace GmodAddonCompressor.Objects
             using (var reader = new WaveFileReader(wavFilePath))
             {
                 var currentRate = reader.WaveFormat.SampleRate;
-
-                Console.WriteLine($"Current rate: {currentRate}");
 
                 if (currentRate > _rateNumber)
                 {
@@ -68,21 +62,25 @@ namespace GmodAddonCompressor.Objects
 
             await Task.Yield();
 
-            if (File.Exists(newWavFilePath))
+            if (File.Exists(newWavFilePath) && File.Exists(wavFilePath))
             {
-                if (File.Exists(wavFilePath))
-                    File.Delete(wavFilePath);
+                long oldFileSize = new FileInfo(wavFilePath).Length;
+                long newFileSize = new FileInfo(newWavFilePath).Length;
 
                 await Task.Yield();
 
-                File.Copy(newWavFilePath, wavFilePath);
+                if (newFileSize < oldFileSize)
+                {
+                    File.Delete(wavFilePath);
+                    File.Copy(newWavFilePath, wavFilePath);
+                }
+                else
+                    Console.WriteLine($"WAV compression failed: {wavFilePath}");
+
                 File.Delete(newWavFilePath);
             }
 
             await Task.Yield();
-
-            if (File.Exists(tempWavFilePath))
-                File.Delete(tempWavFilePath);
         }
     }
 }

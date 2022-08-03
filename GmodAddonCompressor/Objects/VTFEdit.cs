@@ -58,11 +58,19 @@ namespace GmodAddonCompressor.Objects
 
             if (File.Exists(pngFilePath))
             {
+                long oldFileSize = new FileInfo(pngFilePath).Length;
+
                 await PngCompress(pngFilePath);
 
                 if (File.Exists(pngFilePath))
                 {
-                    await ImageToVtf(pngFilePath);
+                    long newFileSize = new FileInfo(pngFilePath).Length;
+
+                    if (newFileSize < oldFileSize)
+                        await ImageToVtf(pngFilePath);
+                    else
+                        Console.WriteLine($"VTF compression failed: {vtfFilePath}");
+
                     File.Delete(pngFilePath);
                 }
             }
@@ -111,10 +119,10 @@ namespace GmodAddonCompressor.Objects
             if (string.IsNullOrEmpty(pngDirectory))
                 pngDirectory = Path.GetDirectoryName(imageFilePath);
 
-            string imageExtension = Path.GetExtension(imageFilePath);
-            imageExtension = imageExtension.Substring(1);
+            //string imageExtension = Path.GetExtension(imageFilePath);
+            //imageExtension = imageExtension.Substring(1);
 
-            Console.WriteLine($"{imageExtension.ToLower()} to VTF: {imageFilePath}");
+            //Console.WriteLine($"{imageExtension.ToLower()} to VTF: {imageFilePath}");
 
             string arguments = string.Empty;
             arguments += $" -file \"{imageFilePath}\"";
@@ -128,7 +136,7 @@ namespace GmodAddonCompressor.Objects
             if (string.IsNullOrEmpty(vtfDirectory))
                 vtfDirectory = Path.GetDirectoryName(vtfFilePath);
 
-            Console.WriteLine($"VTF to {fileExtension.ToLower()}: {vtfFilePath}");
+            //Console.WriteLine($"VTF to {fileExtension.ToLower()}: {vtfFilePath}");
 
             string arguments = string.Empty;
             arguments += $" -file \"{vtfFilePath}\"";

@@ -41,6 +41,7 @@ namespace GmodAddonCompressor
             if (Directory.Exists(addonDirectoryPath))
             {
                 ImageEditBase.SetMinimumSizeLimit(Context.ImageSizeLimit);
+                ImageEditBase.SetSkipSizeLimit(Context.ImageSkipWidth, Context.ImageSkipHeight);
 
                 var compressSystem = new CompressAddonSystem(addonDirectoryPath);
 

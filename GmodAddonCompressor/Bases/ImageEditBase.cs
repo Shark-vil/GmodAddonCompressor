@@ -13,6 +13,8 @@ namespace GmodAddonCompressor.Bases
     {
         // 64, 128, 256, 512
         private static uint _minimumSizeLimit = 256;
+        private static uint _skipWidth = 0;
+        private static uint _skipHeight = 0;
 
         protected int _resolution = 4;
         protected string _fileExtension = string.Empty;
@@ -29,6 +31,12 @@ namespace GmodAddonCompressor.Bases
         internal static void SetMinimumSizeLimit(uint sizeLimit)
         {
             _minimumSizeLimit = sizeLimit;
+        }
+
+        internal static void SetSkipSizeLimit(uint width, uint height)
+        {
+            _skipWidth = width;
+            _skipHeight = height;
         }
 
         protected async Task ImageCompress(string imageFilePath)
@@ -69,7 +77,11 @@ namespace GmodAddonCompressor.Bases
                 }
             }
 
-            if (currentWidth != 0 && currentHeight != 0)
+            if (
+                currentWidth != 0 && currentHeight != 0
+                && (_skipWidth == 0 || currentWidth > _skipWidth)
+                && (_skipHeight == 0 || currentHeight > _skipHeight)
+            )
             {
                 await Task.Yield();
 
@@ -83,7 +95,20 @@ namespace GmodAddonCompressor.Bases
 
             if (File.Exists(tempImageFilePath))
             {
-                if (!File.Exists(imageFilePath))
+                if (File.Exists(imageFilePath))
+                {
+                    long oldFileSize = new FileInfo(tempImageFilePath).Length;
+                    long newFileSize = new FileInfo(imageFilePath).Length;
+
+                    if (newFileSize > oldFileSize)
+                    {
+                        File.Delete(imageFilePath);
+                        File.Copy(tempImageFilePath, imageFilePath);
+
+                        Console.WriteLine($"Image compression failed: {imageFilePath}");
+                    }
+                }
+                else
                     File.Copy(tempImageFilePath, imageFilePath);
 
                 File.Delete(tempImageFilePath);
@@ -107,12 +132,31 @@ namespace GmodAddonCompressor.Bases
             {
                 var size = new MagickGeometry(newWidth, newHeight);
                 size.IgnoreAspectRatio = false;
-                //size.IgnoreAspectRatio = true;
 
                 image.Resize(size);
+
+                //if (_fileExtension == "jpg" || _fileExtension == "jpeg")
+                //    image.SetCompression(CompressionMethod.JPEG);
+                //else
+                //    image.SetCompression(CompressionMethod.LZMA);
+
                 image.SetCompression(CompressionMethod.LZMA);
                 image.Write(imageSavePath);
             }
+
+            //try
+            //{
+            //    FileInfo file = new FileInfo(imageSavePath);
+
+            //    var optimizer = new ImageOptimizer();
+            //    optimizer.LosslessCompress(file);
+
+            //    file.Refresh();
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine(ex);
+            //}
         }
     }
 }
