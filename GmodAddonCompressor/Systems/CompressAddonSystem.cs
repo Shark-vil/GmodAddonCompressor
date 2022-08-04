@@ -1,10 +1,10 @@
-﻿using GmodAddonCompressor.Objects;
-using System;
-using System.Collections.Concurrent;
+﻿using GmodAddonCompressor.CustomExtensions;
+using GmodAddonCompressor.DataContexts;
+using GmodAddonCompressor.Interfaces;
+using GmodAddonCompressor.Objects;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,68 +15,67 @@ namespace GmodAddonCompressor.Systems
         internal delegate void ProgressChangedEvent(string filePath, int fileIndex, int filesCount);
         internal delegate void CompletedCompressEvent();
 
-        internal ProgressChangedEvent e_ProgressChanged;
-        internal CompletedCompressEvent e_CompletedCompress;
-
-        private VTFEdit _VTFEdit = new VTFEdit();
-        private WAVEdit _WAVEdit = new WAVEdit();
-        private MP3Edit _MP3Edit = new MP3Edit();
-        private PNGEdit _PNGEdit = new PNGEdit();
-        private JPEGEdit _JPEGEdit = new JPEGEdit();
-        private JPGEdit _JPGEdit = new JPGEdit();
+        internal ProgressChangedEvent? e_ProgressChanged;
+        internal CompletedCompressEvent? e_CompletedCompress;
 
         private Queue<FileInfo> _registredFiles = new Queue<FileInfo>();
         private bool _hasStarted = false;
         private Thread? _compressThread = null;
         private List<string> _validFileExtensions = new List<string>();
         private string _directoryPath;
+        private Dictionary<string, ICompress> _compressServices = new Dictionary<string, ICompress>();
+        private readonly ILogger _logger = LogSystem.CreateLogger<CompressAddonSystem>();
 
         public CompressAddonSystem(string directoryPath)
         {
             _directoryPath = directoryPath;
+            CompressDirectoryContext.DirectoryPath = _directoryPath;
         }
 
         internal void IncludeLUA()
         {
-            AddValidFileExtensions(".lua");
+            string extension = ".lua";
+            AddValidFileExtensions(extension);
+            _compressServices.Add(extension, new LUAEdit());
         }
 
         internal void IncludeMP3()
         {
-            AddValidFileExtensions(".mp3");
+            string extension = ".mp3";
+            AddValidFileExtensions(extension);
+            _compressServices.Add(extension, new MP3Edit());
         }
 
         internal void IncludeWAV()
         {
-            AddValidFileExtensions(".wav");
+            string extension = ".wav";
+            AddValidFileExtensions(extension);
+            _compressServices.Add(extension, new WAVEdit());
         }
 
         internal void IncludeVTF()
         {
-            AddValidFileExtensions(".vtf");
+            string extension = ".vtf";
+            AddValidFileExtensions(extension);
+            _compressServices.Add(extension, new VTFEdit());
         }
 
         internal void IncludeJPG()
         {
-            AddValidFileExtensions(".jpg");
-            AddValidFileExtensions(".jpeg");
+            string extension = ".jpg";
+            AddValidFileExtensions(extension);
+            _compressServices.Add(extension, new JPGEdit());
+
+            extension = ".jpeg";
+            AddValidFileExtensions(extension);
+            _compressServices.Add(extension, new JPEGEdit());
         }
 
         internal void IncludePNG()
         {
-            AddValidFileExtensions(".png");
-        }
-
-        internal void SetWavRate(int rateNumber)
-        {
-            _WAVEdit.RateNumber = rateNumber;
-        }
-
-        internal void SetReducingResolution(int resolution)
-        {
-            _VTFEdit.Resolution = resolution;
-            _JPGEdit.Resolution = resolution;
-            _PNGEdit.Resolution = resolution;
+            string extension = ".png";
+            AddValidFileExtensions(extension);
+            _compressServices.Add(extension, new PNGEdit());
         }
 
         internal void StartCompress()
@@ -102,16 +101,15 @@ namespace GmodAddonCompressor.Systems
         private void AddValidFileExtensions(string extension)
         {
             if (!_validFileExtensions.Exists(x => x == extension))
-            {
                 _validFileExtensions.Add(extension);
-                Console.WriteLine("Add valid file extensions: " + extension);
-            }
         }
 
-        //private void RemoveValidFileExtensions(string extension)
-        //{
-        //    _validFileExtensions.RemoveAll(x => x == extension);
-        //}
+        private ICompress? GetService(string extension)
+        {
+            if (_compressServices.TryGetValue(extension, out var service))
+                return service;
+            return null;
+        }
 
         private void CompressThread()
         {
@@ -126,43 +124,10 @@ namespace GmodAddonCompressor.Systems
 
             await Parallel.ForEachAsync(_registredFiles, async (FileInfo file, CancellationToken cancellationToken) =>
             {
-                string filePath = file.FullName;
+                ICompress? service = GetService(file.Extension);
 
-                //Console.WriteLine($"Target file: {filePath.Replace(_directoryPath, string.Empty)}");
-
-                switch (file.Extension)
-                {
-                    case ".vtf":
-                        await _VTFEdit.VtfCompress(filePath);
-                        break;
-
-                    case ".jpg":
-                        await _JPGEdit.JpgCompress(filePath);
-                        break;
-
-                    case ".jpeg":
-                        await _JPEGEdit.JpegCompress(filePath);
-                        break;
-
-                    case ".png":
-                        await _PNGEdit.PngCompress(filePath);
-                        break;
-
-                    case ".wav":
-                        await _WAVEdit.WavCompress(filePath);
-                        break;
-
-                    case ".mp3":
-                        await _MP3Edit.Mp3Compress(filePath);
-                        break;
-
-                    case ".lua":
-                        using (LUAEdit luuEdit = new LUAEdit())
-                        {
-                            await luuEdit.LuaCompress(filePath);
-                        }
-                        break;
-                }
+                if (service != null)
+                    await service.Compress(file.FullName);
 
                 fileIndex++;
 
@@ -182,10 +147,7 @@ namespace GmodAddonCompressor.Systems
             foreach (FileInfo file in files)
             {
                 if (_validFileExtensions.Contains(file.Extension))
-                {
                     _registredFiles.Enqueue(file);
-                    Console.WriteLine($"Register file: {file.FullName.Replace(_directoryPath, string.Empty)}");
-                }
             }
 
             foreach (DirectoryInfo directory in currentDirectory.GetDirectories())

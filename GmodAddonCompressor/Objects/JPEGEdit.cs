@@ -1,20 +1,17 @@
 ﻿using GmodAddonCompressor.Bases;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using GmodAddonCompressor.Interfaces;
 using System.Threading.Tasks;
 
 namespace GmodAddonCompressor.Objects
 {
-    internal class JPEGEdit : ImageEditBase
+    internal class JPEGEdit : ImageEditBase, ICompress
     {
         public JPEGEdit()
         {
             SetImageFileExtension(".jpeg");
         }
 
-        internal async Task JpegCompress(string jpegFilePath)
+        public async Task Compress(string jpegFilePath)
         {
             await ImageCompress(jpegFilePath);
         }

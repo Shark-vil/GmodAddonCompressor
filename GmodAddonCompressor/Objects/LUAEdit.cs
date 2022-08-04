@@ -1,6 +1,9 @@
-﻿using GmodAddonCompressor.Properties;
+﻿using GmodAddonCompressor.CustomExtensions;
+using GmodAddonCompressor.Interfaces;
+using GmodAddonCompressor.Properties;
+using GmodAddonCompressor.Systems;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,12 +11,12 @@ using System.Threading.Tasks;
 
 namespace GmodAddonCompressor.Objects
 {
-    internal class LUAEdit : IDisposable
+    internal class LUAEdit : ICompress
     {
         private readonly string _scriptCompact;
         private readonly string _scriptCommentsRemover;
         private readonly string _initScriptsCode;
-        private NLua.Lua _luaMachine;
+        private readonly ILogger _logger = LogSystem.CreateLogger<LUAEdit>();
 
         public LUAEdit()
         {
@@ -26,33 +29,38 @@ namespace GmodAddonCompressor.Objects
                     return luaCode
                 end
             ";
-
-            _luaMachine = new NLua.Lua();
-            _luaMachine.DoString(_scriptCompact);
-            _luaMachine.DoString(_scriptCommentsRemover);
-            _luaMachine.DoString(_initScriptsCode);
         }
 
-        public void Dispose()
-        {
-            _luaMachine.Dispose();
-        }
-
-        internal async Task LuaCompress(string luaFilePath)
+        public async Task Compress(string luaFilePath)
         {
             try
             {
-                var F_LuaMinifer = _luaMachine["LuaMinifer"] as NLua.LuaFunction;
-                string luaCode = await File.ReadAllTextAsync(luaFilePath);
-                string newLuaCode = (string)F_LuaMinifer.Call(luaCode).First();
-                if (!string.IsNullOrEmpty(newLuaCode))
-                    await File.WriteAllTextAsync(luaFilePath, newLuaCode);
-                else
-                    Console.WriteLine($"LUA compression failed: {luaFilePath}");
+                using (var luaMachine = new NLua.Lua())
+                {
+                    luaMachine.DoString(_scriptCompact);
+                    luaMachine.DoString(_scriptCommentsRemover);
+                    luaMachine.DoString(_initScriptsCode);
+
+                    await Task.Yield();
+
+                    var F_LuaMinifer = luaMachine["LuaMinifer"] as NLua.LuaFunction;
+                    if (F_LuaMinifer != null)
+                    {
+                        string luaCode = await File.ReadAllTextAsync(luaFilePath);
+                        string newLuaCode = (string)F_LuaMinifer.Call(luaCode).First();
+                        if (!string.IsNullOrEmpty(newLuaCode))
+                        {
+                            await File.WriteAllTextAsync(luaFilePath, newLuaCode);
+                            _logger.LogInformation($"Successful file compression: {luaFilePath.GAC_ToLocalPath()}");
+                        }
+                        else
+                            _logger.LogError($"LUA compression failed: {luaFilePath.GAC_ToLocalPath()}");
+                    }
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                _logger.LogError(ex.ToString());
             }
         }
     }

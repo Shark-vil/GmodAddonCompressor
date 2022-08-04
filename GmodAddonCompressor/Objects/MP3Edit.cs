@@ -1,14 +1,12 @@
-﻿using NAudio.Wave;
+﻿using GmodAddonCompressor.Interfaces;
+using NAudio.Wave;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GmodAddonCompressor.Objects
 {
-    internal class MP3Edit
+    internal class MP3Edit : ICompress
     {
         private int _rateNumber = 22050;
 
@@ -21,7 +19,7 @@ namespace GmodAddonCompressor.Objects
             }
         }
 
-        internal async Task Mp3Compress(string mp3FilePath)
+        public async Task Compress(string mp3FilePath)
         {
             string tempMp3FilePath = mp3FilePath + "_temp.mp3";
             string newMp3FilePath = mp3FilePath + "_new.mp3";

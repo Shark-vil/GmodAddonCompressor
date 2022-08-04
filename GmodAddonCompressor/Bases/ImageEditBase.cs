@@ -1,50 +1,26 @@
-﻿using ImageMagick;
+﻿using GmodAddonCompressor.DataContexts;
+using GmodAddonCompressor.Systems;
+using ImageMagick;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using GmodAddonCompressor.CustomExtensions;
 
 namespace GmodAddonCompressor.Bases
 {
     internal abstract class ImageEditBase
     {
-        // 64, 128, 256, 512
-        private static uint _minimumSizeLimit = 256;
-        private static uint _skipWidth = 0;
-        private static uint _skipHeight = 0;
-
-        protected int _resolution = 4;
         protected string _fileExtension = string.Empty;
-
-        internal int Resolution
-        {
-            get { return _resolution; }
-            set
-            {
-                _resolution = value < 2 ? 2 : value > 6 ? 6 : value;
-            }
-        }
-
-        internal static void SetMinimumSizeLimit(uint sizeLimit)
-        {
-            _minimumSizeLimit = sizeLimit;
-        }
-
-        internal static void SetSkipSizeLimit(uint width, uint height)
-        {
-            _skipWidth = width;
-            _skipHeight = height;
-        }
+        private readonly ILogger _logger = LogSystem.CreateLogger<ImageEditBase>();
 
         protected async Task ImageCompress(string imageFilePath)
         {
             if (string.IsNullOrEmpty(_fileExtension))
                 throw new Exception("Not set image file extension");
 
-            string tempImageFilePath = imageFilePath + "_temp." + _fileExtension;
+            string tempImageFilePath = imageFilePath + "____TEMP." + _fileExtension;
 
             if (!File.Exists(tempImageFilePath))
                 File.Copy(imageFilePath, tempImageFilePath);
@@ -73,14 +49,18 @@ namespace GmodAddonCompressor.Bases
                 }
             }
 
+            uint skipWidth = ImageContext.SkipWidth;
+            uint skipHeight = ImageContext.SkipHeight;
+
             if (
                 currentWidth != 0 && currentHeight != 0
-                && (_skipWidth == 0 || currentWidth > _skipWidth)
-                && (_skipHeight == 0 || currentHeight > _skipHeight)
+                && (skipWidth == 0 || currentWidth > skipWidth)
+                && (skipHeight == 0 || currentHeight > skipHeight)
             )
             {
-                int newWidth = currentWidth / _resolution;
-                int newHeight = currentHeight / _resolution;
+                int resolution = ImageContext.Resolution;
+                int newWidth = currentWidth / resolution;
+                int newHeight = currentHeight / resolution;
 
                 await SaveMagickImage(tempImageFilePath, imageFilePath, newWidth, newHeight);
             }
@@ -97,8 +77,10 @@ namespace GmodAddonCompressor.Bases
                         File.Delete(imageFilePath);
                         File.Copy(tempImageFilePath, imageFilePath);
 
-                        Console.WriteLine($"Image compression failed: {imageFilePath}");
+                        _logger.LogError($"Image compression failed: {imageFilePath.GAC_ToLocalPath()}");
                     }
+                    else
+                        _logger.LogInformation($"Successful file compression: {imageFilePath.GAC_ToLocalPath()}");
                 }
                 else
                     File.Copy(tempImageFilePath, imageFilePath);
@@ -116,11 +98,12 @@ namespace GmodAddonCompressor.Bases
         {
             int resizeWidth = newWidth;
             int resizeHeight = newHeight;
+            uint minimumSizeLimit = ImageContext.MinimumSizeLimit;
 
-            if (newWidth < _minimumSizeLimit || newHeight < _minimumSizeLimit)
+            if (newWidth < minimumSizeLimit || newHeight < minimumSizeLimit)
             {
-                resizeWidth = (int)_minimumSizeLimit;
-                resizeHeight = (int)_minimumSizeLimit;
+                resizeWidth = (int)minimumSizeLimit;
+                resizeHeight = (int)minimumSizeLimit;
             }
 
             using (var image = new MagickImage(imageSourcePath))
@@ -136,7 +119,7 @@ namespace GmodAddonCompressor.Bases
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    _logger.LogError(ex.ToString());
                 }
             }
 
@@ -155,7 +138,7 @@ namespace GmodAddonCompressor.Bases
                 }
             }
 
-            string additionalCompressionFilePath = imageSavePath + "_LC." + _fileExtension;
+            string additionalCompressionFilePath = imageSavePath + "____TEMPCOMPRESS." + _fileExtension;
             File.Copy(imageSavePath, additionalCompressionFilePath);
 
             try
@@ -172,7 +155,7 @@ namespace GmodAddonCompressor.Bases
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                _logger.LogError(ex.ToString());
             }
 
             if (File.Exists(additionalCompressionFilePath))

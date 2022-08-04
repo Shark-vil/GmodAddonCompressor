@@ -1,61 +1,54 @@
-﻿using NAudio.Wave;
+﻿using GmodAddonCompressor.CustomExtensions;
+using GmodAddonCompressor.DataContexts;
+using GmodAddonCompressor.Interfaces;
+using GmodAddonCompressor.Systems;
+using Microsoft.Extensions.Logging;
+using NAudio.Wave;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GmodAddonCompressor.Objects
 {
-    internal class WAVEdit
+    internal class WAVEdit : ICompress
     {
-        private int _rateNumber = 22050;
+        private readonly ILogger _logger = LogSystem.CreateLogger<WAVEdit>();
 
-        internal int RateNumber
+        public async Task Compress(string wavFilePath)
         {
-            get { return _rateNumber; }
-            set
-            {
-                _rateNumber = value < 16000 ? 16000 : value > 44100 ? 44100 : value;
-            }
-        }
-
-        internal async Task WavCompress(string wavFilePath)
-        {
-            string newWavFilePath = wavFilePath + "_new.wav";
+            string newWavFilePath = wavFilePath + "____TEMP.wav";
 
             await Task.Yield();
 
-            // 44100 - Высокое качество
-            // 32000 - Нормальное качество
-            // 22050 - Среднее качество
-            // 16000 - Низкое качество
-
             using (var reader = new WaveFileReader(wavFilePath))
             {
-                var currentRate = reader.WaveFormat.SampleRate;
+                WaveFormat currentFormet = reader.WaveFormat;
+                int rateNumber = AudioContext.RateNumber;
 
-                if (currentRate > _rateNumber)
+                if (currentFormet.SampleRate > rateNumber)
                 {
-                    var newFormat = new WaveFormat(_rateNumber, 16, 1);
+                    var newFormat = new WaveFormat(rateNumber, 16, 1);
 
                     try
                     {
-                        using (var stream = new MemoryStream())
+                        using (var c = new WaveFormatConversionStream(newFormat, reader))
                         {
-                            using (var s = new RawSourceWaveStream(stream, newFormat))
-                            {
-                                using (var c = new WaveFormatConversionStream(WaveFormat.CreateALawFormat(_rateNumber, 1), s))
-                                {
-                                    WaveFileWriter.CreateWaveFile(newWavFilePath, c);
-                                }
-                            }
+                            WaveFileWriter.CreateWaveFile(newWavFilePath, c);
                         }
+                    }
+                    catch (NAudio.MmException ex)
+                    {
+                        if (ex.Result == NAudio.MmResult.AcmNotPossible)
+                            _logger.LogError($"{wavFilePath.GAC_ToLocalPath()}\n" +
+                                "WAV file conversion error! " +
+                                "The required codec may not be installed on the computer: " +
+                                $"{reader.WaveFormat.Encoding}\n{ex}");
+                        else
+                            _logger.LogError(ex.ToString());
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        _logger.LogError(ex.ToString());
                     }
                 }
             }
@@ -73,9 +66,11 @@ namespace GmodAddonCompressor.Objects
                 {
                     File.Delete(wavFilePath);
                     File.Copy(newWavFilePath, wavFilePath);
+
+                    _logger.LogInformation($"Successful file compression: {wavFilePath.GAC_ToLocalPath()}");
                 }
                 else
-                    Console.WriteLine($"WAV compression failed: {wavFilePath}");
+                    _logger.LogError($"WAV compression failed: {wavFilePath.GAC_ToLocalPath()}");
 
                 File.Delete(newWavFilePath);
             }

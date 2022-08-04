@@ -1,25 +1,23 @@
-﻿using GmodAddonCompressor.Bases;
-using GmodAddonCompressor.DataContexts;
+﻿using GmodAddonCompressor.DataContexts;
 using GmodAddonCompressor.Helpres;
 using GmodAddonCompressor.Systems;
-using System;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace GmodAddonCompressor
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        private MainWindowContext Context = new MainWindowContext();
+        private MainWindowContext _context = new MainWindowContext();
+        private const string _version = "v1.0.3";
 
         public MainWindow()
         {
             InitializeComponent();
 
-            DataContext = Context;
+            DataContext = _context;
+            VersionId.Text = _version;
 
             Button_Compress.Click += Button_Compress_Click;
             Button_SelectDirectory.Click += Button_SelectDirectory_Click;
@@ -30,40 +28,50 @@ namespace GmodAddonCompressor
             var dialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
             if (dialog.ShowDialog(this).GetValueOrDefault())
             {
-                Context.AddonDirectoryPath = dialog.SelectedPath;
+                _context.AddonDirectoryPath = dialog.SelectedPath;
             }
         }
 
         private void Button_Compress_Click(object sender, RoutedEventArgs e)
         {
-            string addonDirectoryPath = Context.AddonDirectoryPath;
+            string addonDirectoryPath = _context.AddonDirectoryPath;
 
             if (Directory.Exists(addonDirectoryPath))
             {
-                ImageEditBase.SetMinimumSizeLimit(Context.ImageSizeLimit);
-                ImageEditBase.SetSkipSizeLimit(Context.ImageSkipWidth, Context.ImageSkipHeight);
-
-                var compressSystem = new CompressAddonSystem(addonDirectoryPath);
-
-                if (Context.CompressVTF) compressSystem.IncludeVTF();
-                if (Context.CompressWAV) compressSystem.IncludeWAV();
-                //if (Context.CompressMP3) compressSystem.IncludeMP3();
-                if (Context.CompressJPG) compressSystem.IncludeJPG();
-                if (Context.CompressPNG) compressSystem.IncludePNG();
-                if (Context.CompressLUA) compressSystem.IncludeLUA();
-
-                int rateIndex = Context.WavRateListIndex;
-                int resolutionIndex = Context.ImageReducingResolutionListIndex;
-
-                compressSystem.SetWavRate(Context.WavRateList[rateIndex]);
-                compressSystem.SetReducingResolution(Context.ImageReducingResolutionList[resolutionIndex]);
-
-                compressSystem.e_ProgressChanged += CompressProgress;
-                compressSystem.e_CompletedCompress += CompressCompleted;
-                compressSystem.StartCompress();
-
-                Context.UnlockedUI = false;
+                Task.Run(async () =>
+                {
+                    await StartCompressProcess(addonDirectoryPath);
+                });
             }
+        }
+
+        private async Task StartCompressProcess(string addonDirectoryPath)
+        {
+            _context.UnlockedUI = false;
+
+            await Task.Delay(500);
+
+            int rateIndex = _context.WavRateListIndex;
+            int resolutionIndex = _context.ImageReducingResolutionListIndex;
+
+            AudioContext.RateNumber = _context.WavRateList[rateIndex];
+            ImageContext.Resolution = _context.ImageReducingResolutionList[resolutionIndex];
+            ImageContext.MinimumSizeLimit = _context.ImageSizeLimit;
+            ImageContext.SkipWidth = _context.ImageSkipWidth;
+            ImageContext.SkipHeight = _context.ImageSkipHeight;
+
+            var compressSystem = new CompressAddonSystem(addonDirectoryPath);
+
+            if (_context.CompressVTF) compressSystem.IncludeVTF();
+            if (_context.CompressWAV) compressSystem.IncludeWAV();
+            //if (Context.CompressMP3) compressSystem.IncludeMP3();
+            if (_context.CompressJPG) compressSystem.IncludeJPG();
+            if (_context.CompressPNG) compressSystem.IncludePNG();
+            if (_context.CompressLUA) compressSystem.IncludeLUA();
+
+            compressSystem.e_ProgressChanged += CompressProgress;
+            compressSystem.e_CompletedCompress += CompressCompleted;
+            compressSystem.StartCompress();
         }
 
         private void CompressProgress(string filePath, int fileIndex, int filesCount)
@@ -71,20 +79,20 @@ namespace GmodAddonCompressor
             double difference = (double)100 / (double)filesCount;
             double percent = (double)difference * (double)fileIndex;
 
-            Context.ProgressBarMinValue = 0;
-            Context.ProgressBarMaxValue = filesCount;
-            Context.ProgressBarValue = fileIndex;
-            Context.ProgressBarText = $"{(int)percent} % | Files: {fileIndex} / {filesCount}";
+            _context.ProgressBarMinValue = 0;
+            _context.ProgressBarMaxValue = filesCount;
+            _context.ProgressBarValue = fileIndex;
+            _context.ProgressBarText = $"{(int)percent} % | Files: {fileIndex} / {filesCount}";
         }
 
         private void CompressCompleted()
         {
-            Context.ProgressBarMinValue = 0;
-            Context.ProgressBarMaxValue = 100;
-            Context.ProgressBarValue = 0;
-            Context.ProgressBarText = string.Empty;
+            _context.ProgressBarMinValue = 0;
+            _context.ProgressBarMaxValue = 100;
+            _context.ProgressBarValue = 0;
+            _context.ProgressBarText = string.Empty;
 
-            Context.UnlockedUI = true;
+            _context.UnlockedUI = true;
         }
 
         private void CheckBox_EnableDebugConsole(object sender, RoutedEventArgs e)
