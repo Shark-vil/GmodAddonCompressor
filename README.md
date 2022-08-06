@@ -6,6 +6,6 @@
 - Compressing audio files (WAV)
 - LUA code minimization
 
-The application should work correctly without additional files. But if you're still experiencing problems and the app won't launch, try installing this:
+# BE SURE TO INSTALL THIS PACKAGE FOR THE APP TO WORK CORRECTLY:
 
 https://dotnet.microsoft.com/en-us/download/dotnet/6.0/runtime
