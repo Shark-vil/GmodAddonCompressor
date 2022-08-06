@@ -61,10 +61,7 @@ namespace GmodAddonCompressor.Objects
 
                 try
                 {
-                    if (ImageContext.TryKeepQuality)
-                        await OptImageAndExportToVtf(pngFilePath);
-                    else
-                        await OptImageToVtf(pngFilePath);
+                    await ExportImageToVtf(pngFilePath, useVTFCmd: !ImageContext.TryKeepQuality);
 
                     if (File.Exists(vtfFilePath))
                     {
@@ -77,12 +74,7 @@ namespace GmodAddonCompressor.Objects
                     }
                     
                     if (!File.Exists(vtfFilePath))
-                    {
-                        if (ImageContext.TryKeepQuality)
-                            await OptImageToVtf(pngFilePath);
-                        else
-                            await OptImageAndExportToVtf(pngFilePath);
-                    }
+                        await ExportImageToVtf(pngFilePath, useVTFCmd: ImageContext.TryKeepQuality);
 
                     if (File.Exists(vtfFilePath))
                     {
@@ -111,6 +103,14 @@ namespace GmodAddonCompressor.Objects
 
                 File.Delete(pngFilePath);
             }
+        }
+
+        private async Task ExportImageToVtf(string imageFilePath, bool useVTFCmd)
+        {
+            if (useVTFCmd)
+                await OptImageToVtf(imageFilePath);
+            else
+                await OptImageAndExportToVtf(imageFilePath);
         }
 
         private async Task OptImageAndExportToVtf(string pngFilePath)
@@ -209,8 +209,8 @@ namespace GmodAddonCompressor.Objects
 
             bool isSingleColor = ImageIsSingleColor(imageFilePath);
 
-            newWidth = isSingleColor ? 8 : (newWidth < ImageContext.TaargetWidth ? ImageContext.TaargetWidth : newWidth);
-            newHeight = isSingleColor ? 8 : (newHeight < ImageContext.TargetHeight ? ImageContext.TargetHeight : newHeight);
+            newWidth = isSingleColor ? 1 : (newWidth < ImageContext.TaargetWidth ? ImageContext.TaargetWidth : newWidth);
+            newHeight = isSingleColor ? 1 : (newHeight < ImageContext.TargetHeight ? ImageContext.TargetHeight : newHeight);
 
             if (newWidth > imageWidth || newHeight > imageHeight) return;
 

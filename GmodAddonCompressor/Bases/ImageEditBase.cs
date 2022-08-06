@@ -255,8 +255,8 @@ namespace GmodAddonCompressor.Bases
 
             bool isSingleColor = ImageIsSingleColor(imageSavePath);
             
-            int resizeWidth = isSingleColor ? 8 : (newWidth < ImageContext.TaargetWidth ? ImageContext.TaargetWidth : newWidth);
-            int resizeHeight = isSingleColor ? 8 :(newHeight < ImageContext.TargetHeight ? ImageContext.TargetHeight : newHeight);
+            int resizeWidth = isSingleColor ? 1 : (newWidth < ImageContext.TaargetWidth ? ImageContext.TaargetWidth : newWidth);
+            int resizeHeight = isSingleColor ? 1 :(newHeight < ImageContext.TargetHeight ? ImageContext.TargetHeight : newHeight);
 
             if (newWidth > imageSize[0] || newHeight > imageSize[1]) return;
 

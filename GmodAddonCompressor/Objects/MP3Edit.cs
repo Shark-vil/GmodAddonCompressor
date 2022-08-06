@@ -1,4 +1,8 @@
-﻿using GmodAddonCompressor.Interfaces;
+﻿using GmodAddonCompressor.CustomExtensions;
+using GmodAddonCompressor.DataContexts;
+using GmodAddonCompressor.Interfaces;
+using GmodAddonCompressor.Systems;
+using Microsoft.Extensions.Logging;
 using NAudio.Wave;
 using System;
 using System.IO;
@@ -8,77 +12,65 @@ namespace GmodAddonCompressor.Objects
 {
     internal class MP3Edit : ICompress
     {
-        private int _rateNumber = 22050;
-
-        internal int RateNumber
-        {
-            get { return _rateNumber; }
-            set
-            {
-                _rateNumber = value < 16000 ? 16000 : value > 44100 ? 44100 : value;
-            }
-        }
+        private readonly ILogger _logger = LogSystem.CreateLogger<WAVEdit>();
 
         public async Task Compress(string mp3FilePath)
         {
-            string tempMp3FilePath = mp3FilePath + "_temp.mp3";
-            string newMp3FilePath = mp3FilePath + "_new.mp3";
-
-            if (!File.Exists(tempMp3FilePath))
-                File.Copy(mp3FilePath, tempMp3FilePath);
-
-            await Task.Yield();
+            string newMp3FilePath = mp3FilePath + "____TEMP.mp3";
 
             using (var reader = new Mp3FileReader(mp3FilePath))
             {
-                var currentRate = reader.WaveFormat.SampleRate;
+                WaveFormat currentFormet = reader.WaveFormat;
+                int rateNumber = AudioContext.RateNumber;
 
-                Console.WriteLine($"Current rate: {currentRate}");
-
-                if (currentRate > _rateNumber)
+                if (currentFormet.SampleRate > rateNumber)
                 {
                     Mp3Frame frame = reader.ReadNextFrame();
-
-                    //var newFormat = new Mp3WaveFormat(_rateNumber, 1, frame.FrameLength, 16);
-
-                    var newFormat = new Mp3WaveFormat(
-                        _rateNumber,
-                        reader.WaveFormat.Channels, // 1
-                        frame.FrameLength,
-                        reader.WaveFormat.BitsPerSample // 16
-                    );
+                    var newFormat = new Mp3WaveFormat(rateNumber, 1, frame.FrameLength, 16);
 
                     try
                     {
-                        using (var conversionStream = WaveFormatConversionStream.CreatePcmStream(reader))
+                        using (var c = new WaveFormatConversionStream(newFormat, reader))
                         {
-                            WaveFileWriter.CreateWaveFile(newMp3FilePath, conversionStream);
+                            WaveFileWriter.CreateWaveFile(newMp3FilePath, c);
                         }
+                    }
+                    catch (NAudio.MmException ex)
+                    {
+                        if (ex.Result == NAudio.MmResult.AcmNotPossible)
+                            _logger.LogError($"{mp3FilePath.GAC_ToLocalPath()}\n" +
+                                "WAV file conversion error! " +
+                                "The required codec may not be installed on the computer: " +
+                                $"{reader.WaveFormat.Encoding}\n{ex}");
+                        else
+                            _logger.LogError(ex.ToString());
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        _logger.LogError(ex.ToString());
                     }
                 }
             }
 
             await Task.Yield();
 
-            if (File.Exists(newMp3FilePath))
+            if (File.Exists(newMp3FilePath) && File.Exists(mp3FilePath))
             {
-                if (File.Exists(mp3FilePath))
+                long oldFileSize = new FileInfo(mp3FilePath).Length;
+                long newFileSize = new FileInfo(newMp3FilePath).Length;
+
+                if (newFileSize < oldFileSize)
+                {
                     File.Delete(mp3FilePath);
+                    File.Copy(newMp3FilePath, mp3FilePath);
 
-                await Task.Yield();
+                    _logger.LogInformation($"Successful file compression: {mp3FilePath.GAC_ToLocalPath()}");
+                }
+                else
+                    _logger.LogError($"MP3 compression failed: {mp3FilePath.GAC_ToLocalPath()}");
 
-                File.Copy(newMp3FilePath, mp3FilePath);
                 File.Delete(newMp3FilePath);
             }
-
-            await Task.Yield();
-
-            if (File.Exists(tempMp3FilePath))
-                File.Delete(tempMp3FilePath);
         }
     }
 }

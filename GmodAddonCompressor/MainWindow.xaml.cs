@@ -10,7 +10,7 @@ namespace GmodAddonCompressor
     public partial class MainWindow : Window
     {
         private MainWindowContext _context = new MainWindowContext();
-        private const string _version = "v1.0.4";
+        private const string _version = "v1.0.5";
 
         public MainWindow()
         {
@@ -70,7 +70,8 @@ namespace GmodAddonCompressor
 
             if (_context.CompressVTF) compressSystem.IncludeVTF();
             if (_context.CompressWAV) compressSystem.IncludeWAV();
-            //if (Context.CompressMP3) compressSystem.IncludeMP3();
+            if (_context.CompressMP3) compressSystem.IncludeMP3();
+            if (_context.CompressOGG) compressSystem.IncludeOGG();
             if (_context.CompressJPG) compressSystem.IncludeJPG();
             if (_context.CompressPNG) compressSystem.IncludePNG();
             if (_context.CompressLUA) compressSystem.IncludeLUA();

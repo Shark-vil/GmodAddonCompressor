@@ -14,6 +14,7 @@ namespace GmodAddonCompressor.DataContexts
         private bool _compressVTF = true;
         private bool _compressWAV = true;
         private bool _compressMP3 = true;
+        private bool _compressOGG = true;
         private bool _compressJPG = true;
         private bool _compressPNG = true;
         private bool _compressLUA = true;
@@ -238,6 +239,16 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _compressVTF = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool CompressOGG
+        {
+            get { return _compressOGG; }
+            set
+            {
+                _compressOGG = value;
                 OnPropertyChanged();
             }
         }

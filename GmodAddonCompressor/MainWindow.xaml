@@ -91,7 +91,7 @@
         <Grid Grid.Column="1" Grid.Row="0" Margin="10, 10, 5, 10">
             <StackPanel Orientation="Vertical">
 
-                <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Vertical">
                     <CheckBox
                         Style="{StaticResource DarkCheckBox}"
                         Margin="0, 5, 0, 5"
@@ -99,13 +99,20 @@
                         HorizontalAlignment="Left"
                         IsChecked="{Binding CompressWAV}"/>
 
-                    <!--
+
                     <CheckBox
-                        Margin="20, 5, 0, 5"
-                        Content="MP3"
+                        Style="{StaticResource DarkCheckBox}"
+                        Margin="0, 5, 0, 5"
+                        Content="MP3 (Demo)"
                         HorizontalAlignment="Left"
                         IsChecked="{Binding CompressMP3}"/>
-                    -->
+
+                    <CheckBox
+                        Style="{StaticResource DarkCheckBox}"
+                        Margin="0, 5, 0, 5"
+                        Content="OGG (Demo)"
+                        HorizontalAlignment="Left"
+                        IsChecked="{Binding CompressOGG}"/>
                 </StackPanel>
 
                 <Label

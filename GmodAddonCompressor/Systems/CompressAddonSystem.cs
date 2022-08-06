@@ -39,6 +39,13 @@ namespace GmodAddonCompressor.Systems
             _compressServices.Add(extension, new LUAEdit());
         }
 
+        internal void IncludeOGG()
+        {
+            string extension = ".ogg";
+            AddValidFileExtensions(extension);
+            _compressServices.Add(extension, new OGGEdit());
+        }
+
         internal void IncludeMP3()
         {
             string extension = ".mp3";
