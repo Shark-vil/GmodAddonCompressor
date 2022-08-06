@@ -1,7 +1,10 @@
-﻿using GmodAddonCompressor.CustomExtensions;
+﻿using GmodAddonCompressor.Bases;
+using GmodAddonCompressor.CustomExtensions;
+using GmodAddonCompressor.DataContexts;
 using GmodAddonCompressor.Interfaces;
 using GmodAddonCompressor.Properties;
 using GmodAddonCompressor.Systems;
+using ImageMagick;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
@@ -11,14 +14,14 @@ using System.Threading.Tasks;
 
 namespace GmodAddonCompressor.Objects
 {
-    internal class VTFEdit : PNGEdit, ICompress
+    internal class VTFEdit : ImageEditBase, ICompress
     {
         private const string _mainDirectoryName = "VTFEdit";
         private readonly string _vtfCmdFilePath;
         private string _mainDirectoryPath;
         private readonly ILogger _logger = LogSystem.CreateLogger<VTFEdit>();
 
-        public VTFEdit() : base()
+        public VTFEdit()
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             _mainDirectoryPath = Path.Combine(baseDirectory, _mainDirectoryName);
@@ -35,56 +38,95 @@ namespace GmodAddonCompressor.Objects
             }
 
             _vtfCmdFilePath = Path.Combine(_mainDirectoryPath, "VTFCmd.exe");
+
+            SetImageFileExtension(".png");
         }
 
-        new public async Task Compress(string vtfFilePath)
+        public async Task Compress(string vtfFilePath)
         {
-            long oldFileSize = -1;
-            long newFileSize = -1;
-
             string pngFilePath = vtfFilePath.Substring(0, vtfFilePath.Length - 3);
             pngFilePath += "png";
+
+            long oldFileSize = new FileInfo(vtfFilePath).Length;
+            long newFileSize = 0;
 
             await VtfToPng(vtfFilePath);
 
             if (File.Exists(pngFilePath))
             {
+                string tempVtfFilePath = vtfFilePath + "____TEMP.vtf";
+
+                File.Copy(vtfFilePath, tempVtfFilePath);
+                File.Delete(vtfFilePath);
+
                 try
                 {
-                    oldFileSize = new FileInfo(pngFilePath).Length;
+                    if (ImageContext.TryKeepQuality)
+                        await OptImageAndExportToVtf(pngFilePath);
+                    else
+                        await OptImageToVtf(pngFilePath);
 
-                    await base.Compress(pngFilePath);
+                    if (File.Exists(vtfFilePath))
+                    {
+                        newFileSize = new FileInfo(vtfFilePath).Length;
+                        if (newFileSize >= oldFileSize)
+                        {
+                            File.Delete(vtfFilePath);
+                            newFileSize = 0;
+                        }
+                    }
+                    
+                    if (!File.Exists(vtfFilePath))
+                    {
+                        if (ImageContext.TryKeepQuality)
+                            await OptImageToVtf(pngFilePath);
+                        else
+                            await OptImageAndExportToVtf(pngFilePath);
+                    }
+
+                    if (File.Exists(vtfFilePath))
+                    {
+                        newFileSize = newFileSize != 0 ? newFileSize : new FileInfo(vtfFilePath).Length;
+                        if (newFileSize < oldFileSize)
+                        {
+                            if (File.Exists(tempVtfFilePath)) File.Delete(tempVtfFilePath);
+                            _logger.LogInformation($"Successful file compression: {vtfFilePath.GAC_ToLocalPath()}");
+                        }
+                    }
+
+                    if (File.Exists(tempVtfFilePath))
+                    {
+                        if (File.Exists(vtfFilePath)) File.Delete(vtfFilePath);
+
+                        File.Copy(tempVtfFilePath, vtfFilePath);
+                        File.Delete(tempVtfFilePath);
+
+                        _logger.LogError($"VTF compression failed: {vtfFilePath.GAC_ToLocalPath()}");
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex.ToString());
                 }
 
-                if (File.Exists(pngFilePath))
+                File.Delete(pngFilePath);
+            }
+        }
+
+        private async Task OptImageAndExportToVtf(string pngFilePath)
+        {
+            try
+            {
+                bool isTransparent = ImageIsFullTransparent(pngFilePath);
+                if (!isTransparent)
                 {
-                    try
-                    {
-                        if (oldFileSize != -1)
-                        {
-                            newFileSize = new FileInfo(pngFilePath).Length;
-
-                            if (newFileSize < oldFileSize)
-                            {
-                                await ImageToVtf(pngFilePath);
-
-                                _logger.LogInformation($"Successful file compression: {vtfFilePath.GAC_ToLocalPath()}");
-                            }
-                            else
-                                _logger.LogError($"VTF compression failed: {vtfFilePath.GAC_ToLocalPath()}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex.ToString());
-                    }
-
-                    File.Delete(pngFilePath);
+                    await ImageCompress(pngFilePath);
+                    await ImageToVtf(pngFilePath);
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
             }
         }
 
@@ -148,10 +190,65 @@ namespace GmodAddonCompressor.Objects
             await VtfToImage("png", vtfFilePath, vtfDirectory);
         }
 
-        //private async Task VtfToJpg(string vtfFilePath, string vtfDirectory = "")
-        //{
-        //    await VtfToImage("jpg", vtfFilePath, vtfDirectory);
-        //}
+        private async Task OptImageToVtf(string imageFilePath, string? pngDirectory = null)
+        {
+            if (string.IsNullOrEmpty(pngDirectory))
+                pngDirectory = Path.GetDirectoryName(imageFilePath);
+
+            int[] imageSize = GetImageSize(imageFilePath);
+            int imageWidth = imageSize[0];
+            int imageHeight = imageSize[1];
+
+            if (imageWidth == 0 || imageWidth == 0) return;
+
+            int[] newImageSize = GetReduceResolutionSize(imageWidth, imageHeight);
+            int newWidth = newImageSize[0];
+            int newHeight = newImageSize[1];
+
+            if (newWidth == 0 || newHeight == 0) return;
+
+            bool isSingleColor = ImageIsSingleColor(imageFilePath);
+
+            newWidth = isSingleColor ? 8 : (newWidth < ImageContext.TaargetWidth ? ImageContext.TaargetWidth : newWidth);
+            newHeight = isSingleColor ? 8 : (newHeight < ImageContext.TargetHeight ? ImageContext.TargetHeight : newHeight);
+
+            if (newWidth > imageWidth || newHeight > imageHeight) return;
+
+            if (!isSingleColor && ImageContext.KeepImageAspectRatio)
+            {
+                try
+                {
+                    using (var image = new MagickImage(imageFilePath))
+                    {
+                        try
+                        {
+                            var size = new MagickGeometry(newWidth, newHeight);
+                            size.IgnoreAspectRatio = false;
+
+                            image.Resize(size);
+
+                            imageWidth = image.Width;
+                            imageHeight = image.Height;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex.ToString());
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
+            }
+
+            string arguments = string.Empty;
+            arguments += $" -file \"{imageFilePath}\"";
+            arguments += $" -output \"{pngDirectory}\"";
+            arguments += $" -resize -rwidth {imageWidth} -rheight {imageHeight}";
+
+            await StartVtfCmdProcess(arguments);
+        }
 
         private async Task ImageToVtf(string imageFilePath, string? pngDirectory = null)
         {

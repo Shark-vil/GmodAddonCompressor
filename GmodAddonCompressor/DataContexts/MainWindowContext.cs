@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GmodAddonCompressor.DataContexts
 {
@@ -22,16 +17,41 @@ namespace GmodAddonCompressor.DataContexts
         private bool _compressJPG = true;
         private bool _compressPNG = true;
         private bool _compressLUA = true;
-        private uint _imageSizeLimit = 1000;
+        private bool _reduceExactlyToLimits = false;
+        private bool _reduceExactlyToResolution = true;
+        private bool _keepImageAspectRatio = true;
+        private bool _tryKeepQuality = false;
         private uint _imageSkipWidth = 0;
         private uint _imageSkipHeight = 0;
         private int _wavRate = 22050;
         private int _wavRateListIndex = 0;
         private int _imageReducingResolutionListIndex = 0;
+        private int _imageWidthLimitIndex = 10;
+        private int _imageHeightLimitIndex = 10;
         private int[] _imageReducingResolutionList = new int[]
         {
             2,
             4,
+            6,
+            8,
+            10,
+            12,
+        };
+        private uint[] _imageSizeLimitList = new uint[]
+        {
+            1,
+            2,
+            4,
+            8,
+            16,
+            32,
+            64,
+            128,
+            256,
+            512,
+            1024,
+            2048,
+            4096,
         };
         private int[] _wavRateList = new int[]
         {
@@ -61,16 +81,32 @@ namespace GmodAddonCompressor.DataContexts
             }
         }
 
-        public uint ImageSizeLimit
+        public uint[] ImageSizeLimitList
         {
-            get { return _imageSizeLimit; }
+            get { return _imageSizeLimitList; }
             set
             {
-                if (value == 0)
-                    _imageSizeLimit = 1;
-                else
-                    _imageSizeLimit = value;
+                _imageSizeLimitList = value;
+                OnPropertyChanged();
+            }
+        }
 
+        public int ImageWidthLimitIndex
+        {
+            get { return _imageWidthLimitIndex; }
+            set
+            {
+                _imageWidthLimitIndex = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int ImageHeightLimitIndex
+        {
+            get { return _imageHeightLimitIndex; }
+            set
+            {
+                _imageHeightLimitIndex = value;
                 OnPropertyChanged();
             }
         }
@@ -121,6 +157,47 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _wavRate = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool TryKeepQuality
+        {
+            get { return _tryKeepQuality; }
+            set
+            {
+                _tryKeepQuality = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool KeepImageAspectRatio
+        {
+            get { return _keepImageAspectRatio; }
+            set
+            {
+                _keepImageAspectRatio = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool ReduceExactlyToResolution
+        {
+            get { return _reduceExactlyToResolution; }
+            set
+            {
+                _reduceExactlyToResolution = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool ReduceExactlyToLimits
+        {
+            get { return _reduceExactlyToLimits; }
+            set
+            {
+                _reduceExactlyToLimits = value;
+                ReduceExactlyToResolution = !_reduceExactlyToLimits;
                 OnPropertyChanged();
             }
         }

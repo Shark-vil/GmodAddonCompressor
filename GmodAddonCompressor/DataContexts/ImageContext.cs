@@ -2,19 +2,13 @@
 {
     internal class ImageContext
     {
-        private static int _resolution = 4;
-
-        internal static int Resolution
-        {
-            get { return _resolution; }
-            set
-            {
-                _resolution = value < 2 ? 2 : value > 6 ? 6 : value;
-            }
-        }
-
-        internal static uint MinimumSizeLimit = 256;
-        internal static uint SkipWidth = 0;
-        internal static uint SkipHeight = 0;
+        internal static int Resolution;
+        internal static int TaargetWidth;
+        internal static int TargetHeight;
+        internal static int SkipWidth;
+        internal static int SkipHeight;
+        internal static bool ReduceExactlyToLimits;
+        internal static bool KeepImageAspectRatio;
+        internal static bool TryKeepQuality;
     }
 }

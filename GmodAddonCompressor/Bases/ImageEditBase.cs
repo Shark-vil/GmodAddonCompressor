@@ -15,23 +15,12 @@ namespace GmodAddonCompressor.Bases
         protected string _fileExtension = string.Empty;
         private readonly ILogger _logger = LogSystem.CreateLogger<ImageEditBase>();
 
-        protected async Task ImageCompress(string imageFilePath)
+        protected int[] GetImageSize(string imageFilePath)
         {
-            if (string.IsNullOrEmpty(_fileExtension))
-                throw new Exception("Not set image file extension");
+            int width = 0;
+            int height = 0;
 
-            string tempImageFilePath = imageFilePath + "____TEMP." + _fileExtension;
-
-            if (!File.Exists(tempImageFilePath))
-                File.Copy(imageFilePath, tempImageFilePath);
-
-            if (File.Exists(imageFilePath))
-                File.Delete(imageFilePath);
-
-            int currentWidth = 0;
-            int currentHeight = 0;
-
-            using (FileStream fs = new FileStream(tempImageFilePath, FileMode.Open, FileAccess.Read))
+            using (FileStream fs = new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
             {
                 using (Image image = Image.FromStream(fs))
                 {
@@ -39,8 +28,166 @@ namespace GmodAddonCompressor.Bases
                     {
                         Bitmap original = (Bitmap)image;
 
-                        currentWidth = original.Width;
-                        currentHeight = original.Height;
+                        width = original.Width;
+                        height = original.Height;
+                    }
+                    catch (Exception ex)
+                    {
+                         _logger.LogError(ex.ToString());
+                    }
+                }
+            }
+
+            return new int[]
+            {
+                width,
+                height,
+            };
+        }
+
+        protected int[] GetReduceResolutionSize(int width, int height)
+        {
+            int skipWidth = ImageContext.SkipWidth;
+            int skipHeight = ImageContext.SkipHeight;
+
+            int newWidth = 0;
+            int newHeight = 0;
+
+            if (
+                width != 0 && height != 0
+                && (skipWidth == 0 || width > skipWidth)
+                && (skipHeight == 0 || height > skipHeight)
+            )
+            {
+                if (ImageContext.ReduceExactlyToLimits)
+                {
+                    newWidth = ImageContext.TaargetWidth;
+                    newHeight = ImageContext.TargetHeight;
+                }
+                else
+                {
+                    int resolution = ImageContext.Resolution;
+                    newWidth = FloorPowerTwo(width / resolution);
+                    newHeight = FloorPowerTwo(height / resolution);
+                }
+            }
+
+            return new int[]
+            {
+                newWidth,
+                newHeight,
+            };
+        }
+
+        protected bool ImageIsSingleColor(string imageFilePath)
+        {
+            IMagickColor<ushort>? firstColorPixel = null;
+            bool isFindedColor = false;
+            bool isSingleColor = true;
+
+            using (var image = new MagickImage(imageFilePath))
+            {
+                using (IPixelCollection<ushort> pixels = image.GetPixels())
+                {
+                    try
+                    {
+                        for (int xPixel = 0; xPixel < image.Width; xPixel++)
+                        {
+                            for (int yPixel = 0; yPixel < image.Height; yPixel++)
+                            {
+                                IPixel<ushort> getPixel = pixels.GetPixel(xPixel, yPixel);
+                                IMagickColor<ushort>? getColor = getPixel.ToColor();
+
+                                if (!isFindedColor)
+                                {
+                                    firstColorPixel = getColor;
+                                    isFindedColor = true;
+                                }
+                                else if (firstColorPixel == null || getColor == null || !firstColorPixel.Equals(getColor))
+                                {
+                                    isSingleColor = false;
+                                    break;
+                                }
+                            }
+
+                            if (!isSingleColor) break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex.ToString());
+                    }
+                }
+            }
+
+            /*
+            using (FileStream fs = new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
+            {
+                using (Image image = Image.FromStream(fs))
+                {
+                    try
+                    {
+                        Bitmap original = (Bitmap)image;
+
+                        for (int xPixel = 0; xPixel < original.Width; xPixel++)
+                        {
+                            for (int yPixel = 0; yPixel < original.Height; yPixel++)
+                            {
+                                Color getColor = original.GetPixel(xPixel, yPixel);
+
+                                if (!isFindedColor)
+                                {
+                                    firstColorPixel = getColor.ToArgb();
+                                    Console.WriteLine($"Pxl : {firstColorPixel}");
+                                    isFindedColor = true;
+                                }
+                                else if (firstColorPixel != getColor.ToArgb())
+                                {
+                                    Console.WriteLine($"Pxl wrong : {firstColorPixel} != {getColor.ToArgb()}");
+                                    isSingleColor = false;
+                                    break;
+                                }
+                            }
+
+                            if (!isSingleColor) break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
+                }
+            }
+            */
+
+            return isSingleColor;
+        }
+
+        protected bool ImageIsFullTransparent(string imageFilePath)
+        {
+            bool isTransparent = true;
+
+            using (FileStream fs = new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
+            {
+                using (Image image = Image.FromStream(fs))
+                {
+                    try
+                    {
+                        Bitmap original = (Bitmap)image;
+    
+                        for (int xPixel = 0; xPixel < original.Width; xPixel++)
+                        {
+                            for (int yPixel = 0; yPixel < original.Height; yPixel++)
+                            {
+                                if (original.GetPixel(xPixel, yPixel).A > 0)
+                                {
+                                    isTransparent = false;
+                                    break;
+                                }
+                            }
+
+                            if (!isTransparent) break;
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -49,21 +196,17 @@ namespace GmodAddonCompressor.Bases
                 }
             }
 
-            uint skipWidth = ImageContext.SkipWidth;
-            uint skipHeight = ImageContext.SkipHeight;
+            return isTransparent;
+        }
 
-            if (
-                currentWidth != 0 && currentHeight != 0
-                && (skipWidth == 0 || currentWidth > skipWidth)
-                && (skipHeight == 0 || currentHeight > skipHeight)
-            )
-            {
-                int resolution = ImageContext.Resolution;
-                int newWidth = currentWidth / resolution;
-                int newHeight = currentHeight / resolution;
+        protected async Task ImageCompress(string imageFilePath)
+        {
+            if (string.IsNullOrEmpty(_fileExtension))
+                throw new Exception("Not set image file extension");
 
-                await SaveMagickImage(tempImageFilePath, imageFilePath, newWidth, newHeight);
-            }
+            string tempImageFilePath = imageFilePath + "____TEMP" + _fileExtension;
+                
+            await SaveMagickImage(tempImageFilePath, imageFilePath);
 
             if (File.Exists(tempImageFilePath))
             {
@@ -94,27 +237,47 @@ namespace GmodAddonCompressor.Bases
             _fileExtension = fileExtension;
         }
 
-        private async Task SaveMagickImage(string imageSourcePath, string imageSavePath, int newWidth, int newHeight)
+        private int FloorPowerTwo(int x)
         {
-            int resizeWidth = newWidth;
-            int resizeHeight = newHeight;
-            uint minimumSizeLimit = ImageContext.MinimumSizeLimit;
+            if (x < 1) return 1;
+            return (int)System.Math.Pow(2, (int)System.Math.Log(x, 2));
+        }
 
-            if (newWidth < minimumSizeLimit || newHeight < minimumSizeLimit)
-            {
-                resizeWidth = (int)minimumSizeLimit;
-                resizeHeight = (int)minimumSizeLimit;
-            }
+        private async Task SaveMagickImage(string imageSourcePath, string imageSavePath)
+        {
+            int[] imageSize = GetImageSize(imageSavePath);
+            if (imageSize[0] == 0 || imageSize[1] == 0) return;
+
+            int[] newImageSize = GetReduceResolutionSize(imageSize[0], imageSize[1]);
+
+            int newWidth = newImageSize[0];
+            int newHeight = newImageSize[1];
+
+            bool isSingleColor = ImageIsSingleColor(imageSavePath);
+            
+            int resizeWidth = isSingleColor ? 8 : (newWidth < ImageContext.TaargetWidth ? ImageContext.TaargetWidth : newWidth);
+            int resizeHeight = isSingleColor ? 8 :(newHeight < ImageContext.TargetHeight ? ImageContext.TargetHeight : newHeight);
+
+            if (newWidth > imageSize[0] || newHeight > imageSize[1]) return;
+
+            if (!File.Exists(imageSourcePath))
+                File.Copy(imageSavePath, imageSourcePath);
+
+            if (File.Exists(imageSavePath))
+                File.Delete(imageSavePath);
 
             using (var image = new MagickImage(imageSourcePath))
             {
                 try
                 {
                     var size = new MagickGeometry(resizeWidth, resizeHeight);
-                    size.IgnoreAspectRatio = false;
+                    size.IgnoreAspectRatio = isSingleColor ? true : !ImageContext.KeepImageAspectRatio;
 
                     image.Resize(size);
-                    image.SetCompression(CompressionMethod.LZMA);
+
+                    if (!isSingleColor)
+                        image.SetCompression(CompressionMethod.LZMA);
+
                     image.Write(imageSavePath);
                 }
                 catch (Exception ex)
@@ -122,6 +285,9 @@ namespace GmodAddonCompressor.Bases
                     _logger.LogError(ex.ToString());
                 }
             }
+
+            if (isSingleColor)
+                return;
 
             long oldFileSize = -1;
             DateTime timeOut = DateTime.UtcNow.AddSeconds(5);
@@ -138,7 +304,7 @@ namespace GmodAddonCompressor.Bases
                 }
             }
 
-            string additionalCompressionFilePath = imageSavePath + "____TEMPCOMPRESS." + _fileExtension;
+            string additionalCompressionFilePath = imageSavePath + "____TEMPCOMPRESS" + _fileExtension;
             File.Copy(imageSavePath, additionalCompressionFilePath);
 
             try

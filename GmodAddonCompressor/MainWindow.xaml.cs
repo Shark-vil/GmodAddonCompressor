@@ -10,7 +10,7 @@ namespace GmodAddonCompressor
     public partial class MainWindow : Window
     {
         private MainWindowContext _context = new MainWindowContext();
-        private const string _version = "v1.0.3";
+        private const string _version = "v1.0.4";
 
         public MainWindow()
         {
@@ -53,12 +53,18 @@ namespace GmodAddonCompressor
 
             int rateIndex = _context.WavRateListIndex;
             int resolutionIndex = _context.ImageReducingResolutionListIndex;
+            int targetWidth = (int)_context.ImageSizeLimitList[_context.ImageWidthLimitIndex];
+            int targetHeight = (int)_context.ImageSizeLimitList[_context.ImageHeightLimitIndex];
 
             AudioContext.RateNumber = _context.WavRateList[rateIndex];
             ImageContext.Resolution = _context.ImageReducingResolutionList[resolutionIndex];
-            ImageContext.MinimumSizeLimit = _context.ImageSizeLimit;
-            ImageContext.SkipWidth = _context.ImageSkipWidth;
-            ImageContext.SkipHeight = _context.ImageSkipHeight;
+            ImageContext.TaargetWidth = targetWidth;
+            ImageContext.TargetHeight = targetHeight;
+            ImageContext.SkipWidth = (int)_context.ImageSkipWidth;
+            ImageContext.SkipHeight = (int)_context.ImageSkipHeight;
+            ImageContext.ReduceExactlyToLimits = _context.ReduceExactlyToLimits;
+            ImageContext.KeepImageAspectRatio = _context.KeepImageAspectRatio;
+            ImageContext.TryKeepQuality = _context.TryKeepQuality;
 
             var compressSystem = new CompressAddonSystem(addonDirectoryPath);
 

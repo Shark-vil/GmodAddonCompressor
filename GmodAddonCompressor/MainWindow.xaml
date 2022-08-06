@@ -6,8 +6,9 @@
         xmlns:local="clr-namespace:GmodAddonCompressor"
         mc:Ignorable="d" ResizeMode="NoResize"
         Background="#424242"
-        Title="Garry's Mod - Resources Compress" Height="415" Width="600">
+        Title="Garry's Mod - Resources Compress" Height="370" Width="800">
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
         <Style x:Key="DarkButton" TargetType="Button">
             <Setter Property="FontFamily" Value="Verdana" />
             <Setter Property="Background" Value="#81bbaa" />
@@ -34,8 +35,9 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition></ColumnDefinition>
-            <ColumnDefinition></ColumnDefinition>
-            <ColumnDefinition Width="140"></ColumnDefinition>
+            <ColumnDefinition Width="150"></ColumnDefinition>
+            <ColumnDefinition Width="260"></ColumnDefinition>
+            <ColumnDefinition Width="130"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0" Grid.Row="0" Margin="5, 10, 5, 10">
@@ -86,7 +88,7 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Column="1" Grid.Row="0" Margin="5, 10, 5, 10">
+        <Grid Grid.Column="1" Grid.Row="0" Margin="10, 10, 5, 10">
             <StackPanel Orientation="Vertical">
 
                 <StackPanel Orientation="Horizontal">
@@ -116,10 +118,14 @@
                 <ComboBox
                     Margin="0, 5, 0, 5"
                     HorizontalAlignment="Left"
-                    ItemsSource="{Binding WavRateList}"
+                    ItemsSource="{Binding WavRateList, Mode=OneTime}"
                     SelectedIndex="{Binding WavRateListIndex, Mode=TwoWay}"
                     Width="100"/>
+            </StackPanel>
+        </Grid>
 
+        <Grid Grid.Column="2" Grid.Row="0" Margin="5, 10, 5, 10">
+            <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal">
                     <CheckBox
                         Style="{StaticResource DarkCheckBox}"
@@ -143,92 +149,107 @@
                         IsChecked="{Binding CompressPNG}"/>
                 </StackPanel>
 
-                <Label
-                    Style="{StaticResource DarkLabel}"
-                    Margin="0, 5, 0, 5"
-                    HorizontalAlignment="Left"
-                    Content="Reducing resolution (2x, 4x)" 
-                    Width="188"/>
+                <StackPanel Orientation="Vertical" Visibility="{Binding Path=ReduceExactlyToResolution, Converter={StaticResource VisibleIfTrueConverter}}">
+                    <Label
+                        Style="{StaticResource DarkLabel}"
+                        Margin="0, 5, 0, 5"
+                        HorizontalAlignment="Left"
+                        Content="Reducing resolution (2x, 4x, etc.)" 
+                        Width="188"/>
 
-                <ComboBox
-                    Margin="0, 5, 0, 5"
-                    HorizontalAlignment="Left"
-                    ItemsSource="{Binding ImageReducingResolutionList}"
-                    SelectedIndex="{Binding ImageReducingResolutionListIndex, Mode=TwoWay}"
-                    Width="100"/>
+                    <ComboBox
+                        Margin="0, 5, 0, 15"
+                        HorizontalAlignment="Left"
+                        ItemsSource="{Binding ImageReducingResolutionList, Mode=OneTime}"
+                        SelectedIndex="{Binding ImageReducingResolutionListIndex, Mode=TwoWay}"
+                        Width="100"/>
+                </StackPanel>
 
-                <StackPanel Orientation="Vertical">
-                    <TextBlock 
-                        Style="{StaticResource DarkTextBlock}"
-                        Margin="5, 0, 15, 0"
-                        Text="Width limit resize:" 
-                        VerticalAlignment="Center" />
-
-                    <StackPanel Orientation="Horizontal">
-                        <TextBox
-                            Margin="0, 5, 0, 5"
-                            HorizontalAlignment="Left"
-                            TextWrapping="Wrap"
-                            Text="{Binding ImageSizeLimit}"
-                            Width="100"/>
-
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical">
                         <TextBlock 
                             Style="{StaticResource DarkTextBlock}"
-                            Margin="10, 0, 0, 0"
-                            Text="{Binding ImageSizeLimit}" 
+                            Margin="5, 0, 15, 0"
+                            Text="Width limit:" 
                             VerticalAlignment="Center" />
+
+                        <ComboBox
+                            Margin="0, 5, 0, 5"
+                            HorizontalAlignment="Left"
+                            ItemsSource="{Binding ImageSizeLimitList, Mode=OneTime}"
+                            SelectedIndex="{Binding ImageWidthLimitIndex, Mode=TwoWay}"
+                            Width="100"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="10, 0, 0, 0" Orientation="Vertical">
+                        <TextBlock 
+                            Style="{StaticResource DarkTextBlock}"
+                            Margin="5, 0, 15, 0"
+                            Text="Height limit:" 
+                            VerticalAlignment="Center" />
+
+                        <ComboBox
+                            Margin="0, 5, 0, 5"
+                            HorizontalAlignment="Left"
+                            ItemsSource="{Binding ImageSizeLimitList, Mode=OneTime}"
+                            SelectedIndex="{Binding ImageHeightLimitIndex, Mode=TwoWay}"
+                            Width="100"/>
                     </StackPanel>
                 </StackPanel>
 
-                <StackPanel Orientation="Vertical">
-                    <TextBlock 
-                        Style="{StaticResource DarkTextBlock}"
-                        Margin="5, 0, 15, 0"
-                        Text="Skip width:" 
-                        VerticalAlignment="Center" />
+                <StackPanel Margin="0, 0, 0, 10" Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock 
+                            Style="{StaticResource DarkTextBlock}"
+                            Margin="5, 0, 15, 0"
+                            Text="Skip width:" 
+                            VerticalAlignment="Center" />
 
-                    <StackPanel Orientation="Horizontal">
                         <TextBox
                             Margin="0, 5, 0, 5"
                             HorizontalAlignment="Left"
                             TextWrapping="Wrap"
                             Text="{Binding ImageSkipWidth}"
                             Width="100"/>
+                    </StackPanel>
 
+                    <StackPanel Margin="10, 0, 0, 0" Orientation="Vertical">
                         <TextBlock 
                             Style="{StaticResource DarkTextBlock}"
-                            Margin="10, 0, 0, 0"
-                            Text="{Binding ImageSkipWidth}" 
+                            Margin="5, 0, 15, 0"
+                            Text="Skip height:" 
                             VerticalAlignment="Center" />
-                    </StackPanel>
-                </StackPanel>
 
-                <StackPanel Orientation="Vertical">
-                    <TextBlock 
-                        Style="{StaticResource DarkTextBlock}"
-                        Margin="5, 0, 15, 0"
-                        Text="Skip height:" 
-                        VerticalAlignment="Center" />
-
-                    <StackPanel Orientation="Horizontal">
                         <TextBox
                             Margin="0, 5, 0, 5"
                             HorizontalAlignment="Left"
                             TextWrapping="Wrap"
                             Text="{Binding ImageSkipHeight}"
                             Width="100"/>
-
-                        <TextBlock 
-                            Style="{StaticResource DarkTextBlock}"
-                            Margin="10, 0, 0, 0"
-                            Text="{Binding ImageSkipHeight}" 
-                            VerticalAlignment="Center" />
                     </StackPanel>
                 </StackPanel>
+
+                <CheckBox
+                    Margin="5"
+                    IsChecked="{Binding ReduceExactlyToLimits}"
+                    Style="{StaticResource DarkCheckBox}"
+                    Content="Reduce exactly to limits"/>
+
+                <CheckBox 
+                    Margin="5"
+                    IsChecked="{Binding KeepImageAspectRatio}"
+                    Style="{StaticResource DarkCheckBox}"
+                    Content="Maintain image aspect ratio"/>
+
+                <CheckBox 
+                    Margin="5"
+                    IsChecked="{Binding TryKeepQuality}"
+                    Style="{StaticResource DarkCheckBox}"
+                    Content="Good compression and quality (slow)"/>
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Column="2" Grid.Row="0" Margin="5, 10, 5, 10">
+        <Grid Grid.Column="3" Grid.Row="0" Margin="5, 10, 5, 10">
             <StackPanel Orientation="Vertical">
                 <CheckBox
                     Style="{StaticResource DarkCheckBox}"
@@ -248,7 +269,7 @@
                 Unchecked="CheckBox_DisableDebugConsole"/>
         </Grid>
 
-        <Grid Grid.Column="2" Grid.Row="1">
+        <Grid Grid.Column="3" Grid.Row="1">
             <StackPanel Orientation="Vertical">
                 <TextBlock 
                     x:Name="VersionId"
