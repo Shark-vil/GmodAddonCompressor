@@ -21,7 +21,7 @@ namespace GmodAddonCompressor.DataContexts
         private bool _reduceExactlyToLimits = false;
         private bool _reduceExactlyToResolution = true;
         private bool _keepImageAspectRatio = true;
-        private bool _tryKeepQuality = false;
+        private bool _imageMagickVTFCompress = false;
         private uint _imageSkipWidth = 0;
         private uint _imageSkipHeight = 0;
         private int _wavRate = 22050;
@@ -162,12 +162,12 @@ namespace GmodAddonCompressor.DataContexts
             }
         }
 
-        public bool TryKeepQuality
+        public bool ImageMagickVTFCompress
         {
-            get { return _tryKeepQuality; }
+            get { return _imageMagickVTFCompress; }
             set
             {
-                _tryKeepQuality = value;
+                _imageMagickVTFCompress = value;
                 OnPropertyChanged();
             }
         }

@@ -9,6 +9,6 @@
         internal static int SkipHeight;
         internal static bool ReduceExactlyToLimits;
         internal static bool KeepImageAspectRatio;
-        internal static bool TryKeepQuality;
+        internal static bool ImageMagickVTFCompress;
     }
 }

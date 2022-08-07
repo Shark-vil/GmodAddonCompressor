@@ -248,11 +248,11 @@
                     Style="{StaticResource DarkCheckBox}"
                     Content="Maintain image aspect ratio"/>
 
-                <CheckBox 
+                <CheckBox
                     Margin="5"
-                    IsChecked="{Binding TryKeepQuality}"
+                    IsChecked="{Binding ImageMagickVTFCompress}"
                     Style="{StaticResource DarkCheckBox}"
-                    Content="Good compression and quality (slow)"/>
+                    Content="ImageMagick VTF compress (Demo)"/>
             </StackPanel>
         </Grid>
 

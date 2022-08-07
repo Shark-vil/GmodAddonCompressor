@@ -61,20 +61,27 @@ namespace GmodAddonCompressor.Objects
 
                 try
                 {
-                    await ExportImageToVtf(pngFilePath, useVTFCmd: !ImageContext.TryKeepQuality);
-
-                    if (File.Exists(vtfFilePath))
+                    if (!ImageContext.ImageMagickVTFCompress)
                     {
-                        newFileSize = new FileInfo(vtfFilePath).Length;
-                        if (newFileSize >= oldFileSize)
-                        {
-                            File.Delete(vtfFilePath);
-                            newFileSize = 0;
-                        }
+                        await OptImageToVtf(pngFilePath);
                     }
-                    
-                    if (!File.Exists(vtfFilePath))
-                        await ExportImageToVtf(pngFilePath, useVTFCmd: ImageContext.TryKeepQuality);
+                    else
+                    {
+                        await OptImageAndExportToVtf(pngFilePath);
+
+                        if (File.Exists(vtfFilePath))
+                        {
+                            newFileSize = new FileInfo(vtfFilePath).Length;
+                            if (newFileSize >= oldFileSize)
+                            {
+                                File.Delete(vtfFilePath);
+                                newFileSize = 0;
+                            }
+                        }
+
+                        if (!File.Exists(vtfFilePath))
+                            await OptImageToVtf(pngFilePath);
+                    }
 
                     if (File.Exists(vtfFilePath))
                     {
@@ -103,14 +110,6 @@ namespace GmodAddonCompressor.Objects
 
                 File.Delete(pngFilePath);
             }
-        }
-
-        private async Task ExportImageToVtf(string imageFilePath, bool useVTFCmd)
-        {
-            if (useVTFCmd)
-                await OptImageToVtf(imageFilePath);
-            else
-                await OptImageAndExportToVtf(imageFilePath);
         }
 
         private async Task OptImageAndExportToVtf(string pngFilePath)
