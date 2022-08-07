@@ -3,7 +3,7 @@
 ## Current features:
 
 - Image compression (VTF, JPG, JPEG, PNG)
-- Compressing audio files (WAV)
+- Compressing audio files (WAV, MP3|Demo, OGG|Demo)
 - LUA code minimization
 
 # BE SURE TO INSTALL THIS PACKAGE FOR THE APP TO WORK CORRECTLY:
