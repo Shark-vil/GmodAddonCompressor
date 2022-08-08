@@ -18,6 +18,7 @@ namespace GmodAddonCompressor.DataContexts
         private bool _compressJPG = true;
         private bool _compressPNG = true;
         private bool _compressLUA = true;
+        private bool _changeOriginalCodeToMinimalistic = false;
         private bool _reduceExactlyToLimits = false;
         private bool _reduceExactlyToResolution = true;
         private bool _keepImageAspectRatio = true;
@@ -199,6 +200,16 @@ namespace GmodAddonCompressor.DataContexts
             {
                 _reduceExactlyToLimits = value;
                 ReduceExactlyToResolution = !_reduceExactlyToLimits;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool ChangeOriginalCodeToMinimalistic
+        {
+            get { return _changeOriginalCodeToMinimalistic; }
+            set
+            {
+                _changeOriginalCodeToMinimalistic = value;
                 OnPropertyChanged();
             }
         }

@@ -37,7 +37,7 @@
             <ColumnDefinition></ColumnDefinition>
             <ColumnDefinition Width="150"></ColumnDefinition>
             <ColumnDefinition Width="260"></ColumnDefinition>
-            <ColumnDefinition Width="130"></ColumnDefinition>
+            <ColumnDefinition Width="180"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0" Grid.Row="0" Margin="5, 10, 5, 10">
@@ -264,6 +264,13 @@
                     Content="LUA"
                     HorizontalAlignment="Left"
                     IsChecked="{Binding CompressLUA}"/>
+
+                <CheckBox
+                    Style="{StaticResource DarkCheckBox}"
+                    Margin="20, 5, 0, 5"
+                    Content="Change original code"
+                    HorizontalAlignment="Left"
+                    IsChecked="{Binding ChangeOriginalCodeToMinimalistic}"/>
             </StackPanel>
         </Grid>
 

@@ -63,6 +63,16 @@ namespace GmodAddonCompressor.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.Byte[].
         /// </summary>
+        internal static byte[] Prometheus {
+            get {
+                object obj = ResourceManager.GetObject("Prometheus", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Byte[].
+        /// </summary>
         internal static byte[] script_comments_remover {
             get {
                 object obj = ResourceManager.GetObject("script_comments_remover", resourceCulture);

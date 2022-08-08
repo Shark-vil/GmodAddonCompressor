@@ -10,7 +10,7 @@ namespace GmodAddonCompressor
     public partial class MainWindow : Window
     {
         private MainWindowContext _context = new MainWindowContext();
-        private const string _version = "v1.0.6";
+        private const string _version = "v1.0.7";
 
         public MainWindow()
         {
@@ -65,6 +65,7 @@ namespace GmodAddonCompressor
             ImageContext.ReduceExactlyToLimits = _context.ReduceExactlyToLimits;
             ImageContext.KeepImageAspectRatio = _context.KeepImageAspectRatio;
             ImageContext.ImageMagickVTFCompress = _context.ImageMagickVTFCompress;
+            LuaContext.ChangeOriginalCodeToMinimalistic = _context.ChangeOriginalCodeToMinimalistic;
 
             var compressSystem = new CompressAddonSystem(addonDirectoryPath);
 
