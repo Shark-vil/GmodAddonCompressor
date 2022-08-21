@@ -1,4 +1,5 @@
 function LuaCommentRemover(lua_code)
+	lua_code = lua_code .. '\n'
 	local new_lua_code = ''
 	local index = 1
 	local lock_chnages_index = 0
@@ -117,7 +118,13 @@ function LuaCommentRemover(lua_code)
 		end
 
 		if not lock_append_char and index > skip_append_index then
+			if new_lua_code == '' and (char == '\n' or char == '\r' or #char == 0) then
+				goto skip
+			end
+
 			new_lua_code = new_lua_code .. char
+
+			::skip::
 		end
 
 		index = index + 1

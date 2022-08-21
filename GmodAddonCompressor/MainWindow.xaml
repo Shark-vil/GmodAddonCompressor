@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:GmodAddonCompressor"
         mc:Ignorable="d" ResizeMode="NoResize"
         Background="#424242"
-        Title="Garry's Mod - Resources Compress" Height="370" Width="800">
+        Title="Garry's Mod - Resources Compress" Height="370" Width="820">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
         <Style x:Key="DarkButton" TargetType="Button">

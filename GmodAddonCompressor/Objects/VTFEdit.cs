@@ -136,7 +136,13 @@ namespace GmodAddonCompressor.Objects
             vtfCmdProcess.StartInfo.Arguments = arguments;
             vtfCmdProcess.StartInfo.UseShellExecute = false;
             vtfCmdProcess.StartInfo.CreateNoWindow = true;
+            vtfCmdProcess.StartInfo.RedirectStandardOutput = true;
+            vtfCmdProcess.StartInfo.RedirectStandardError = true;
+            vtfCmdProcess.OutputDataReceived += (sender, args) => _logger.LogDebug(args.Data);
+            vtfCmdProcess.ErrorDataReceived += (sender, args) => _logger.LogDebug(args.Data);
             vtfCmdProcess.Start();
+            vtfCmdProcess.BeginOutputReadLine();
+            vtfCmdProcess.BeginErrorReadLine();
 
             await vtfCmdProcess.WaitForExitAsync();
         }
