@@ -3,6 +3,7 @@ using GmodAddonCompressor.DataContexts;
 using GmodAddonCompressor.Interfaces;
 using GmodAddonCompressor.Objects;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -134,7 +135,16 @@ namespace GmodAddonCompressor.Systems
                 ICompress? service = GetService(file.Extension);
 
                 if (service != null)
-                    await service.Compress(file.FullName);
+                {
+                    try
+                    {
+                        await service.Compress(file.FullName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex.ToString());
+                    }
+                }
 
                 fileIndex++;
 

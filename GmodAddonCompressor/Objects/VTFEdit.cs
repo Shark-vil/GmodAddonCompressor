@@ -20,6 +20,7 @@ namespace GmodAddonCompressor.Objects
         private readonly string _vtfCmdFilePath;
         private string _mainDirectoryPath;
         private readonly ILogger _logger = LogSystem.CreateLogger<VTFEdit>();
+        private bool _isAnimatedTexture = false;
 
         public VTFEdit()
         {
@@ -52,64 +53,64 @@ namespace GmodAddonCompressor.Objects
 
             await VtfToPng(vtfFilePath);
 
-            if (File.Exists(pngFilePath))
+            if (!File.Exists(pngFilePath))
+                return;
+
+            string tempVtfFilePath = vtfFilePath + "____TEMP.vtf";
+
+            File.Copy(vtfFilePath, tempVtfFilePath);
+            File.Delete(vtfFilePath);
+
+            try
             {
-                string tempVtfFilePath = vtfFilePath + "____TEMP.vtf";
-
-                File.Copy(vtfFilePath, tempVtfFilePath);
-                File.Delete(vtfFilePath);
-
-                try
+                if (!ImageContext.ImageMagickVTFCompress)
                 {
-                    if (!ImageContext.ImageMagickVTFCompress)
-                    {
-                        await OptImageToVtf(pngFilePath);
-                    }
-                    else
-                    {
-                        await OptImageAndExportToVtf(pngFilePath);
-
-                        if (File.Exists(vtfFilePath))
-                        {
-                            newFileSize = new FileInfo(vtfFilePath).Length;
-                            if (newFileSize >= oldFileSize)
-                            {
-                                File.Delete(vtfFilePath);
-                                newFileSize = 0;
-                            }
-                        }
-
-                        if (!File.Exists(vtfFilePath))
-                            await OptImageToVtf(pngFilePath);
-                    }
+                    await OptImageToVtf(pngFilePath);
+                }
+                else
+                {
+                    await OptImageAndExportToVtf(pngFilePath);
 
                     if (File.Exists(vtfFilePath))
                     {
-                        newFileSize = newFileSize != 0 ? newFileSize : new FileInfo(vtfFilePath).Length;
-                        if (newFileSize < oldFileSize)
+                        newFileSize = new FileInfo(vtfFilePath).Length;
+                        if (newFileSize >= oldFileSize)
                         {
-                            if (File.Exists(tempVtfFilePath)) File.Delete(tempVtfFilePath);
-                            _logger.LogInformation($"Successful file compression: {vtfFilePath.GAC_ToLocalPath()}");
+                            File.Delete(vtfFilePath);
+                            newFileSize = 0;
                         }
                     }
 
-                    if (File.Exists(tempVtfFilePath))
-                    {
-                        if (File.Exists(vtfFilePath)) File.Delete(vtfFilePath);
-
-                        File.Copy(tempVtfFilePath, vtfFilePath);
-                        File.Delete(tempVtfFilePath);
-
-                        _logger.LogError($"VTF compression failed: {vtfFilePath.GAC_ToLocalPath()}");
-                    }
+                    if (!File.Exists(vtfFilePath))
+                        await OptImageToVtf(pngFilePath);
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex.ToString());
-                }
-
-                File.Delete(pngFilePath);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+            }
+
+            if (File.Exists(vtfFilePath))
+            {
+                newFileSize = newFileSize != 0 ? newFileSize : new FileInfo(vtfFilePath).Length;
+                if (newFileSize < oldFileSize)
+                {
+                    if (File.Exists(tempVtfFilePath)) File.Delete(tempVtfFilePath);
+                    _logger.LogInformation($"Successful file compression: {vtfFilePath.GAC_ToLocalPath()}");
+                }
+            }
+
+            if (File.Exists(tempVtfFilePath))
+            {
+                if (File.Exists(vtfFilePath)) File.Delete(vtfFilePath);
+
+                File.Copy(tempVtfFilePath, vtfFilePath);
+                File.Delete(tempVtfFilePath);
+
+                _logger.LogError($"VTF compression failed: {vtfFilePath.GAC_ToLocalPath()}");
+            }
+
+            File.Delete(pngFilePath);
         }
 
         private async Task OptImageAndExportToVtf(string pngFilePath)
@@ -147,6 +148,10 @@ namespace GmodAddonCompressor.Objects
             await vtfCmdProcess.WaitForExitAsync();
         }
 
+        /**
+         * Documentation for header format:
+         * https://developer.valvesoftware.com/wiki/Valve_Texture_Format#VTF_header
+         */
         private async Task ChangeVTFVersionTo_7_4(string vtfFilePath)
         {
             using (FileStream FS = File.OpenRead(vtfFilePath))
@@ -161,6 +166,19 @@ namespace GmodAddonCompressor.Objects
 
                         int majorVersion = BR.ReadInt32();
                         int minorVersion = BR.ReadInt32();
+                        int headerSize = BR.ReadInt32();
+                        int width = BR.ReadInt16();
+                        int height = BR.ReadInt16();
+                        int flags = BR.ReadInt32();
+                        int frames = BR.ReadInt16();
+                        int firstFrame = BR.ReadInt16();
+
+                        if (frames > 1)
+                        {
+                            _isAnimatedTexture = true;
+                            return;
+                        }
+
                         if (minorVersion != 5) return;
                     }
                     catch (Exception ex)
@@ -278,7 +296,9 @@ namespace GmodAddonCompressor.Objects
             arguments += $" -exportformat \"{fileExtension}\"";
 
             await ChangeVTFVersionTo_7_4(vtfFilePath);
-            await StartVtfCmdProcess(arguments);
+
+            if (!_isAnimatedTexture)
+                await StartVtfCmdProcess(arguments);
         }
     }
 }
