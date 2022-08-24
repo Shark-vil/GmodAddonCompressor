@@ -138,7 +138,7 @@ namespace GmodAddonCompressor.Systems
                 {
                     try
                     {
-                        await service.Compress(file.FullName);
+                        await Task.WhenAny(service.Compress(file.FullName), Task.Delay(TimeSpan.FromMinutes(2)));
                     }
                     catch (Exception ex)
                     {

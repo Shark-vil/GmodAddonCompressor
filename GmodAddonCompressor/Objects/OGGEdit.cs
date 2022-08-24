@@ -19,6 +19,9 @@ namespace GmodAddonCompressor.Objects
         {
             string newOggFilePath = oggFilePath + "____TEMP.ogg";
 
+            if (File.Exists(newOggFilePath))
+                File.Delete(newOggFilePath);
+
             using (var reader = new VorbisWaveReader(oggFilePath))
             {
                 WaveFormat currentFormet = reader.WaveFormat;
@@ -56,18 +59,25 @@ namespace GmodAddonCompressor.Objects
 
             if (File.Exists(newOggFilePath) && File.Exists(oggFilePath))
             {
-                long oldFileSize = new FileInfo(oggFilePath).Length;
-                long newFileSize = new FileInfo(newOggFilePath).Length;
-
-                if (newFileSize < oldFileSize)
+                try
                 {
-                    File.Delete(oggFilePath);
-                    File.Copy(newOggFilePath, oggFilePath);
+                    long oldFileSize = new FileInfo(oggFilePath).Length;
+                    long newFileSize = new FileInfo(newOggFilePath).Length;
 
-                    _logger.LogInformation($"Successful file compression: {oggFilePath.GAC_ToLocalPath()}");
+                    if (newFileSize < oldFileSize)
+                    {
+                        File.Delete(oggFilePath);
+                        File.Copy(newOggFilePath, oggFilePath);
+
+                        _logger.LogInformation($"Successful file compression: {oggFilePath.GAC_ToLocalPath()}");
+                    }
+                    else
+                        _logger.LogError($"OGG compression failed: {oggFilePath.GAC_ToLocalPath()}");
                 }
-                else
-                    _logger.LogError($"OGG compression failed: {oggFilePath.GAC_ToLocalPath()}");
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
 
                 File.Delete(newOggFilePath);
             }

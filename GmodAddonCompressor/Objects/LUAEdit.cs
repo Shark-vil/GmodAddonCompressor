@@ -81,37 +81,48 @@ namespace GmodAddonCompressor.Objects
 
         public async Task Compress(string luaFilePath)
         {
-            long oldFileSize = new FileInfo(luaFilePath).Length;
-
-            string tempLuaFilePath = luaFilePath + "____TEMP.lua";
-            File.Copy(luaFilePath, tempLuaFilePath);
-
-            string luaCode = await File.ReadAllTextAsync(luaFilePath);
-            byte[] encodeBytes = Encoding.Default.GetBytes(EncodeUTF8(luaCode));
-            await File.WriteAllBytesAsync(luaFilePath, encodeBytes);
-
-            await CompressProcess(luaFilePath);
-
-            string luaCodeEncode = await File.ReadAllTextAsync(luaFilePath);
-            await File.WriteAllTextAsync(luaFilePath, DecodeUTF8(luaCodeEncode));
-
-            long newFileSize = new FileInfo(luaFilePath).Length;
-
-            if (newFileSize < oldFileSize)
-                _logger.LogInformation($"Successful file compression: {luaFilePath.GAC_ToLocalPath()}");
-            else
+            try
             {
-                _logger.LogError($"LUA compression failed: {luaFilePath.GAC_ToLocalPath()}");
+                long oldFileSize = new FileInfo(luaFilePath).Length;
+
+                string tempLuaFilePath = luaFilePath + "____TEMP.lua";
 
                 if (File.Exists(tempLuaFilePath))
-                {
-                    File.Delete(luaFilePath);
-                    File.Copy(tempLuaFilePath, luaFilePath);
-                }
-            }
+                    File.Delete(tempLuaFilePath);
 
-            if (File.Exists(tempLuaFilePath))
-                File.Delete(tempLuaFilePath);
+                File.Copy(luaFilePath, tempLuaFilePath);
+
+                string luaCode = await File.ReadAllTextAsync(luaFilePath);
+                byte[] encodeBytes = Encoding.Default.GetBytes(EncodeUTF8(luaCode));
+                await File.WriteAllBytesAsync(luaFilePath, encodeBytes);
+
+                await Task.WhenAny(CompressProcess(luaFilePath), Task.Delay(TimeSpan.FromMinutes(2)));
+
+                string luaCodeEncode = await File.ReadAllTextAsync(luaFilePath);
+                await File.WriteAllTextAsync(luaFilePath, DecodeUTF8(luaCodeEncode));
+
+                long newFileSize = new FileInfo(luaFilePath).Length;
+
+                if (newFileSize < oldFileSize)
+                    _logger.LogInformation($"Successful file compression: {luaFilePath.GAC_ToLocalPath()}");
+                else
+                {
+                    _logger.LogError($"LUA compression failed: {luaFilePath.GAC_ToLocalPath()}");
+
+                    if (File.Exists(tempLuaFilePath))
+                    {
+                        File.Delete(luaFilePath);
+                        File.Copy(tempLuaFilePath, luaFilePath);
+                    }
+                }
+
+                if (File.Exists(tempLuaFilePath))
+                    File.Delete(tempLuaFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+            }
         }
 
         private async Task LuaFilePrettyPrint(string luaFilePath)

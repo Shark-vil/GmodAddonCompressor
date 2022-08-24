@@ -205,7 +205,10 @@ namespace GmodAddonCompressor.Bases
                 throw new Exception("Not set image file extension");
 
             string tempImageFilePath = imageFilePath + "____TEMP" + _fileExtension;
-                
+
+            if (File.Exists(tempImageFilePath))
+                File.Delete(tempImageFilePath);
+
             await SaveMagickImage(tempImageFilePath, imageFilePath);
 
             if (File.Exists(tempImageFilePath))

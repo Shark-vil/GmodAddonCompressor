@@ -2,6 +2,7 @@
 using GmodAddonCompressor.CustomExtensions;
 using GmodAddonCompressor.DataContexts;
 using GmodAddonCompressor.Interfaces;
+using GmodAddonCompressor.Models;
 using GmodAddonCompressor.Properties;
 using GmodAddonCompressor.Systems;
 using ImageMagick;
@@ -20,7 +21,6 @@ namespace GmodAddonCompressor.Objects
         private readonly string _vtfCmdFilePath;
         private string _mainDirectoryPath;
         private readonly ILogger _logger = LogSystem.CreateLogger<VTFEdit>();
-        private bool _isAnimatedTexture = false;
 
         public VTFEdit()
         {
@@ -51,6 +51,9 @@ namespace GmodAddonCompressor.Objects
             long oldFileSize = new FileInfo(vtfFilePath).Length;
             long newFileSize = 0;
 
+            if (File.Exists(pngFilePath))
+                File.Delete(pngFilePath);
+
             await VtfToPng(vtfFilePath);
 
             if (!File.Exists(pngFilePath))
@@ -78,6 +81,7 @@ namespace GmodAddonCompressor.Objects
                         {
                             File.Delete(vtfFilePath);
                             newFileSize = 0;
+                            await Task.Yield();
                         }
                     }
 
@@ -102,7 +106,8 @@ namespace GmodAddonCompressor.Objects
 
             if (File.Exists(tempVtfFilePath))
             {
-                if (File.Exists(vtfFilePath)) File.Delete(vtfFilePath);
+                if (File.Exists(vtfFilePath))
+                    File.Delete(vtfFilePath);
 
                 File.Copy(tempVtfFilePath, vtfFilePath);
                 File.Delete(tempVtfFilePath);
@@ -132,27 +137,33 @@ namespace GmodAddonCompressor.Objects
 
         private async Task StartVtfCmdProcess(string arguments)
         {
-            var vtfCmdProcess = new Process();
-            vtfCmdProcess.StartInfo.FileName = _vtfCmdFilePath;
-            vtfCmdProcess.StartInfo.Arguments = arguments;
-            vtfCmdProcess.StartInfo.UseShellExecute = false;
-            vtfCmdProcess.StartInfo.CreateNoWindow = true;
-            vtfCmdProcess.StartInfo.RedirectStandardOutput = true;
-            vtfCmdProcess.StartInfo.RedirectStandardError = true;
-            vtfCmdProcess.OutputDataReceived += (sender, args) => _logger.LogDebug(args.Data);
-            vtfCmdProcess.ErrorDataReceived += (sender, args) => _logger.LogDebug(args.Data);
-            vtfCmdProcess.Start();
-            vtfCmdProcess.BeginOutputReadLine();
-            vtfCmdProcess.BeginErrorReadLine();
+            Process? vtfCmdProcess = null;
 
-            await vtfCmdProcess.WaitForExitAsync();
+            try
+            {
+                vtfCmdProcess = new Process();
+                vtfCmdProcess.StartInfo.FileName = _vtfCmdFilePath;
+                vtfCmdProcess.StartInfo.Arguments = arguments;
+                vtfCmdProcess.StartInfo.UseShellExecute = false;
+                vtfCmdProcess.StartInfo.CreateNoWindow = true;
+                vtfCmdProcess.StartInfo.RedirectStandardOutput = true;
+                vtfCmdProcess.StartInfo.RedirectStandardError = true;
+                vtfCmdProcess.OutputDataReceived += (sender, args) => _logger.LogDebug(args.Data);
+                vtfCmdProcess.ErrorDataReceived += (sender, args) => _logger.LogDebug(args.Data);
+                vtfCmdProcess.Start();
+                vtfCmdProcess.BeginOutputReadLine();
+                vtfCmdProcess.BeginErrorReadLine();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+            }
+
+            if (vtfCmdProcess != null)
+                await Task.WhenAny(vtfCmdProcess.WaitForExitAsync(), Task.Delay(TimeSpan.FromMinutes(2)));
         }
 
-        /**
-         * Documentation for header format:
-         * https://developer.valvesoftware.com/wiki/Valve_Texture_Format#VTF_header
-         */
-        private async Task ChangeVTFVersionTo_7_4(string vtfFilePath)
+        private VtfFileModel? GetVtfFileInfo(string vtfFilePath)
         {
             using (FileStream FS = File.OpenRead(vtfFilePath))
             {
@@ -161,33 +172,48 @@ namespace GmodAddonCompressor.Objects
                     try
                     {
                         int id = BR.ReadInt32();
-                        if (id != 0x465456)
-                            return;
-
-                        int majorVersion = BR.ReadInt32();
-                        int minorVersion = BR.ReadInt32();
-                        int headerSize = BR.ReadInt32();
-                        int width = BR.ReadInt16();
-                        int height = BR.ReadInt16();
-                        int flags = BR.ReadInt32();
-                        int frames = BR.ReadInt16();
-                        int firstFrame = BR.ReadInt16();
-
-                        if (frames > 1)
+                        if (id == 0x465456)
                         {
-                            _isAnimatedTexture = true;
-                            return;
-                        }
 
-                        if (minorVersion != 5) return;
+                            int majorVersion = BR.ReadInt32();
+                            int minorVersion = BR.ReadInt32();
+                            int headerSize = BR.ReadInt32();
+                            int width = BR.ReadInt16();
+                            int height = BR.ReadInt16();
+                            int flags = BR.ReadInt32();
+                            int frames = BR.ReadInt16();
+                            int firstFrame = BR.ReadInt16();
+
+                            return new VtfFileModel
+                            {
+                                MajorVersion = majorVersion,
+                                MinorVersion = minorVersion,
+                                HeaderSize = headerSize,
+                                Width = width,
+                                Height = height,
+                                Flags = flags,
+                                Frames = frames,
+                                FirstFrame = firstFrame
+                            };
+                        }
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex.ToString());
-                        return;
                     }
                 }
             }
+
+            return null;
+        }
+
+        /**
+         * Documentation for header format:
+         * https://developer.valvesoftware.com/wiki/Valve_Texture_Format#VTF_header
+         */
+        private async Task ChangeVTFVersionTo_7_4(string vtfFilePath, VtfFileModel vtfInfo)
+        {
+            if (vtfInfo.MinorVersion != 5) return;
 
             await Task.Yield();
 
@@ -218,19 +244,48 @@ namespace GmodAddonCompressor.Objects
             if (string.IsNullOrEmpty(pngDirectory))
                 pngDirectory = Path.GetDirectoryName(imageFilePath);
 
-            int[] imageSize = GetImageSize(imageFilePath);
+            int[] imageSize;
+            try
+            {
+                imageSize = GetImageSize(imageFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return;
+            }
+
             int imageWidth = imageSize[0];
             int imageHeight = imageSize[1];
 
             if (imageWidth == 0 || imageWidth == 0) return;
 
-            int[] newImageSize = GetReduceResolutionSize(imageWidth, imageHeight);
+            int[] newImageSize;
+            try
+            {
+                newImageSize = GetReduceResolutionSize(imageWidth, imageHeight);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return;
+            }
+
             int newWidth = newImageSize[0];
             int newHeight = newImageSize[1];
 
             if (newWidth == 0 || newHeight == 0) return;
 
-            bool isSingleColor = ImageIsSingleColor(imageFilePath);
+            bool isSingleColor;
+            try
+            {
+                isSingleColor = ImageIsSingleColor(imageFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return;
+            }
 
             newWidth = isSingleColor ? 1 : (newWidth < ImageContext.TaargetWidth ? ImageContext.TaargetWidth : newWidth);
             newHeight = isSingleColor ? 1 : (newHeight < ImageContext.TargetHeight ? ImageContext.TargetHeight : newHeight);
@@ -295,10 +350,30 @@ namespace GmodAddonCompressor.Objects
             arguments += $" -output \"{vtfDirectory}\"";
             arguments += $" -exportformat \"{fileExtension}\"";
 
-            await ChangeVTFVersionTo_7_4(vtfFilePath);
+            VtfFileModel? vtfInfo = GetVtfFileInfo(vtfFilePath);
 
-            if (!_isAnimatedTexture)
-                await StartVtfCmdProcess(arguments);
+            if (vtfInfo == null)
+                return;
+
+            if (vtfInfo.Frames > 1)
+                return;
+
+            int vtfWidth = vtfInfo.Width;
+            int vtfHeight = vtfInfo.Height;
+
+            if ((ImageContext.SkipWidth != 0 && vtfWidth <= ImageContext.SkipWidth)
+            || (ImageContext.SkipHeight != 0 && vtfHeight <= ImageContext.SkipHeight))
+            {
+                return;
+            }
+
+            if (ImageContext.ReduceExactlyToLimits && (vtfWidth <= ImageContext.TaargetWidth || vtfHeight <= ImageContext.TargetHeight))
+            {
+                return;
+            }
+
+            await ChangeVTFVersionTo_7_4(vtfFilePath, vtfInfo);
+            await StartVtfCmdProcess(arguments);
         }
     }
 }

@@ -18,6 +18,9 @@ namespace GmodAddonCompressor.Objects
         {
             string newWavFilePath = wavFilePath + "____TEMP.wav";
 
+            if (File.Exists(newWavFilePath))
+                File.Delete(newWavFilePath);
+
             using (var reader = new WaveFileReader(wavFilePath))
             {
                 WaveFormat currentFormet = reader.WaveFormat;
@@ -55,18 +58,25 @@ namespace GmodAddonCompressor.Objects
 
             if (File.Exists(newWavFilePath) && File.Exists(wavFilePath))
             {
-                long oldFileSize = new FileInfo(wavFilePath).Length;
-                long newFileSize = new FileInfo(newWavFilePath).Length;
-
-                if (newFileSize < oldFileSize)
+                try
                 {
-                    File.Delete(wavFilePath);
-                    File.Copy(newWavFilePath, wavFilePath);
+                    long oldFileSize = new FileInfo(wavFilePath).Length;
+                    long newFileSize = new FileInfo(newWavFilePath).Length;
 
-                    _logger.LogInformation($"Successful file compression: {wavFilePath.GAC_ToLocalPath()}");
+                    if (newFileSize < oldFileSize)
+                    {
+                        File.Delete(wavFilePath);
+                        File.Copy(newWavFilePath, wavFilePath);
+
+                        _logger.LogInformation($"Successful file compression: {wavFilePath.GAC_ToLocalPath()}");
+                    }
+                    else
+                        _logger.LogError($"WAV compression failed: {wavFilePath.GAC_ToLocalPath()}");
                 }
-                else
-                    _logger.LogError($"WAV compression failed: {wavFilePath.GAC_ToLocalPath()}");
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
 
                 File.Delete(newWavFilePath);
             }

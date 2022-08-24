@@ -18,6 +18,9 @@ namespace GmodAddonCompressor.Objects
         {
             string newMp3FilePath = mp3FilePath + "____TEMP.mp3";
 
+            if (File.Exists(newMp3FilePath))
+                File.Delete(newMp3FilePath);
+
             using (var reader = new Mp3FileReader(mp3FilePath))
             {
                 WaveFormat currentFormet = reader.WaveFormat;
@@ -56,18 +59,25 @@ namespace GmodAddonCompressor.Objects
 
             if (File.Exists(newMp3FilePath) && File.Exists(mp3FilePath))
             {
-                long oldFileSize = new FileInfo(mp3FilePath).Length;
-                long newFileSize = new FileInfo(newMp3FilePath).Length;
-
-                if (newFileSize < oldFileSize)
+                try
                 {
-                    File.Delete(mp3FilePath);
-                    File.Copy(newMp3FilePath, mp3FilePath);
+                    long oldFileSize = new FileInfo(mp3FilePath).Length;
+                    long newFileSize = new FileInfo(newMp3FilePath).Length;
 
-                    _logger.LogInformation($"Successful file compression: {mp3FilePath.GAC_ToLocalPath()}");
+                    if (newFileSize < oldFileSize)
+                    {
+                        File.Delete(mp3FilePath);
+                        File.Copy(newMp3FilePath, mp3FilePath);
+
+                        _logger.LogInformation($"Successful file compression: {mp3FilePath.GAC_ToLocalPath()}");
+                    }
+                    else
+                        _logger.LogError($"MP3 compression failed: {mp3FilePath.GAC_ToLocalPath()}");
                 }
-                else
-                    _logger.LogError($"MP3 compression failed: {mp3FilePath.GAC_ToLocalPath()}");
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
 
                 File.Delete(newMp3FilePath);
             }

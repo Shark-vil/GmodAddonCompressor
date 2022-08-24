@@ -10,7 +10,7 @@ namespace GmodAddonCompressor
     public partial class MainWindow : Window
     {
         private MainWindowContext _context = new MainWindowContext();
-        private const string _version = "v1.0.9";
+        private const string _version = "v1.1.0";
 
         public MainWindow()
         {
