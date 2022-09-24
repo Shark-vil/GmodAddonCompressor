@@ -57,6 +57,7 @@ namespace GmodAddonCompressor
             int targetHeight = (int)_context.ImageSizeLimitList[_context.ImageHeightLimitIndex];
 
             AudioContext.RateNumber = _context.WavRateList[rateIndex];
+            AudioContext.UseFFMpegForCompress = _context.UseFFMpegForCompress;
             ImageContext.Resolution = _context.ImageReducingResolutionList[resolutionIndex];
             ImageContext.TaargetWidth = targetWidth;
             ImageContext.TargetHeight = targetHeight;

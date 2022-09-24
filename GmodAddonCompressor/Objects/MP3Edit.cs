@@ -21,6 +21,16 @@ namespace GmodAddonCompressor.Objects
             if (File.Exists(newMp3FilePath))
                 File.Delete(newMp3FilePath);
 
+            if (AudioContext.UseFFMpegForCompress)
+            {
+                bool hasCompress = await new FFMpegSystem().CompressAudioAsync(mp3FilePath, newMp3FilePath, AudioContext.RateNumber);
+                if (hasCompress)
+                {
+                    _logger.LogInformation($"Successful file compression: {mp3FilePath.GAC_ToLocalPath()}");
+                    return;
+                }
+            }
+
             using (var reader = new Mp3FileReader(mp3FilePath))
             {
                 WaveFormat currentFormet = reader.WaveFormat;
@@ -57,9 +67,11 @@ namespace GmodAddonCompressor.Objects
 
             await Task.Yield();
 
-            if (File.Exists(newMp3FilePath) && File.Exists(mp3FilePath))
+            try
             {
-                try
+                bool hasCompress = false;
+
+                if (File.Exists(newMp3FilePath))
                 {
                     long oldFileSize = new FileInfo(mp3FilePath).Length;
                     long newFileSize = new FileInfo(newMp3FilePath).Length;
@@ -68,19 +80,25 @@ namespace GmodAddonCompressor.Objects
                     {
                         File.Delete(mp3FilePath);
                         File.Copy(newMp3FilePath, mp3FilePath);
-
-                        _logger.LogInformation($"Successful file compression: {mp3FilePath.GAC_ToLocalPath()}");
+                        hasCompress = true;
                     }
-                    else
-                        _logger.LogError($"MP3 compression failed: {mp3FilePath.GAC_ToLocalPath()}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex.ToString());
                 }
 
-                File.Delete(newMp3FilePath);
+                if (!hasCompress && AudioContext.UseFFMpegForCompress)
+                    hasCompress = await new FFMpegSystem().CompressAudioAsync(mp3FilePath, newMp3FilePath, AudioContext.RateNumber);
+
+                if (hasCompress)
+                    _logger.LogInformation($"Successful file compression: {mp3FilePath.GAC_ToLocalPath()}");
+                else
+                    _logger.LogError($"MP3 compression failed: {mp3FilePath.GAC_ToLocalPath()}");
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+            }
+
+            if (File.Exists(newMp3FilePath))
+                File.Delete(newMp3FilePath);
         }
     }
 }

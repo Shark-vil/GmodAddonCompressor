@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:GmodAddonCompressor"
         mc:Ignorable="d" ResizeMode="NoResize"
         Background="#424242"
-        Title="Garry's Mod - Resources Compress" Height="370" Width="820">
+        Title="Garry's Mod - Resources Compress" Height="370" Width="860">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
         <Style x:Key="DarkButton" TargetType="Button">
@@ -35,7 +35,7 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition></ColumnDefinition>
-            <ColumnDefinition Width="150"></ColumnDefinition>
+            <ColumnDefinition Width="200"></ColumnDefinition>
             <ColumnDefinition Width="260"></ColumnDefinition>
             <ColumnDefinition Width="180"></ColumnDefinition>
         </Grid.ColumnDefinitions>
@@ -103,16 +103,25 @@
                     <CheckBox
                         Style="{StaticResource DarkCheckBox}"
                         Margin="0, 5, 0, 5"
-                        Content="MP3 (Demo)"
+                        Content="MP3"
                         HorizontalAlignment="Left"
                         IsChecked="{Binding CompressMP3}"/>
 
                     <CheckBox
                         Style="{StaticResource DarkCheckBox}"
                         Margin="0, 5, 0, 5"
-                        Content="OGG (Demo)"
+                        Content="OGG"
                         HorizontalAlignment="Left"
                         IsChecked="{Binding CompressOGG}"/>
+
+                    <Separator />
+
+                    <!--<CheckBox
+                        Style="{StaticResource DarkCheckBox}"
+                        Margin="0, 5, 0, 5"
+                        Content="Use &quot;FFMpeg&quot; for compress"
+                        HorizontalAlignment="Left"
+                        IsChecked="{Binding UseFFMpegForCompress}"/>-->
                 </StackPanel>
 
                 <Label

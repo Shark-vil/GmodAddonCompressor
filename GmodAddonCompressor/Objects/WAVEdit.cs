@@ -56,9 +56,12 @@ namespace GmodAddonCompressor.Objects
 
             await Task.Yield();
 
-            if (File.Exists(newWavFilePath) && File.Exists(wavFilePath))
+
+            try
             {
-                try
+                bool hasCompress = false;
+
+                if (File.Exists(newWavFilePath))
                 {
                     long oldFileSize = new FileInfo(wavFilePath).Length;
                     long newFileSize = new FileInfo(newWavFilePath).Length;
@@ -67,19 +70,25 @@ namespace GmodAddonCompressor.Objects
                     {
                         File.Delete(wavFilePath);
                         File.Copy(newWavFilePath, wavFilePath);
-
-                        _logger.LogInformation($"Successful file compression: {wavFilePath.GAC_ToLocalPath()}");
+                        hasCompress = true;
                     }
-                    else
-                        _logger.LogError($"WAV compression failed: {wavFilePath.GAC_ToLocalPath()}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex.ToString());
                 }
 
-                File.Delete(newWavFilePath);
+                if (!hasCompress && AudioContext.UseFFMpegForCompress)
+                    hasCompress = await new FFMpegSystem().CompressAudioAsync(wavFilePath, newWavFilePath, AudioContext.RateNumber);
+
+                if (hasCompress)
+                    _logger.LogInformation($"Successful file compression: {wavFilePath.GAC_ToLocalPath()}");
+                else
+                    _logger.LogError($"WAV compression failed: {wavFilePath.GAC_ToLocalPath()}");
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+            }
+
+            if (File.Exists(newWavFilePath))
+                File.Delete(newWavFilePath);
         }
     }
 }

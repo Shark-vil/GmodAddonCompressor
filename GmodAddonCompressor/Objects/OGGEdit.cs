@@ -57,9 +57,11 @@ namespace GmodAddonCompressor.Objects
 
             await Task.Yield();
 
-            if (File.Exists(newOggFilePath) && File.Exists(oggFilePath))
+            try
             {
-                try
+                bool hasCompress = false;
+
+                if (File.Exists(newOggFilePath))
                 {
                     long oldFileSize = new FileInfo(oggFilePath).Length;
                     long newFileSize = new FileInfo(newOggFilePath).Length;
@@ -68,19 +70,25 @@ namespace GmodAddonCompressor.Objects
                     {
                         File.Delete(oggFilePath);
                         File.Copy(newOggFilePath, oggFilePath);
-
-                        _logger.LogInformation($"Successful file compression: {oggFilePath.GAC_ToLocalPath()}");
+                        hasCompress = true;
                     }
-                    else
-                        _logger.LogError($"OGG compression failed: {oggFilePath.GAC_ToLocalPath()}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex.ToString());
                 }
 
-                File.Delete(newOggFilePath);
+                if (!hasCompress && AudioContext.UseFFMpegForCompress)
+                    hasCompress = await new FFMpegSystem().CompressAudioAsync(oggFilePath, newOggFilePath, AudioContext.RateNumber);
+
+                if (hasCompress)
+                    _logger.LogInformation($"Successful file compression: {oggFilePath.GAC_ToLocalPath()}");
+                else
+                    _logger.LogError($"OGG compression failed: {oggFilePath.GAC_ToLocalPath()}");
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+            }
+
+            if (File.Exists(newOggFilePath))
+                File.Delete(newOggFilePath);
         }
     }
 }
