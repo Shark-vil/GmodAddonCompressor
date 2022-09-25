@@ -114,7 +114,7 @@
                         HorizontalAlignment="Left"
                         IsChecked="{Binding CompressOGG}"/>
 
-                    <Separator />
+                    <!--<Separator />-->
 
                     <!--<CheckBox
                         Style="{StaticResource DarkCheckBox}"

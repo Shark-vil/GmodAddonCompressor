@@ -68,12 +68,18 @@ namespace GmodAddonCompressor.Systems
         {
             long oldFileSize = new FileInfo(filePath).Length;
 
-            await StartFFMpegProcess($"-i \"{filePath}\" -ar {bitrate} {outputFilePath}");
+            //await StartFFMpegProcess($"-i \"{filePath}\" -ar {bitrate} {outputFilePath}");
+
+            //await StartFFMpegProcess($"-i \"{filePath}\" -c:a flac -sample_fmt s16 -ar {bitrate} {outputFilePath}");
+
+            //await StartFFMpegProcess($"-i \"{filePath}\" -ab 16000 -ac 1 -ar {bitrate} {outputFilePath}");
+
+            await StartFFMpegProcess($"-i \"{filePath}\" -ab 16000 -ar {bitrate} {outputFilePath}");
 
             if (File.Exists(outputFilePath))
             {
                 long newFileSize = new FileInfo(outputFilePath).Length;
-                if (newFileSize < oldFileSize)
+                if (newFileSize != 0 && newFileSize < oldFileSize)
                 {
                     File.Delete(filePath);
                     File.Copy(outputFilePath, filePath);
