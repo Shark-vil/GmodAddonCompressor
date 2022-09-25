@@ -27,31 +27,31 @@ namespace GmodAddonCompressor.Objects
                 WaveFormat currentFormet = reader.WaveFormat;
                 int rateNumber = AudioContext.RateNumber;
 
-                if (currentFormet.SampleRate > rateNumber)
-                {
-                    var newFormat = new WaveFormat(rateNumber, 16, 1);
+                if (currentFormet.SampleRate <= rateNumber)
+                    return;
+ 
+                var newFormat = new WaveFormat(rateNumber, 16, 1);
 
-                    try
+                try
+                {
+                    using (var c = new WaveFormatConversionStream(newFormat, reader))
                     {
-                        using (var c = new WaveFormatConversionStream(newFormat, reader))
-                        {
-                            WaveFileWriter.CreateWaveFile(newOggFilePath, c);
-                        }
+                        WaveFileWriter.CreateWaveFile(newOggFilePath, c);
                     }
-                    catch (NAudio.MmException ex)
-                    {
-                        if (ex.Result == NAudio.MmResult.AcmNotPossible)
-                            _logger.LogError($"{oggFilePath.GAC_ToLocalPath()}\n" +
-                                "OGG file conversion error! " +
-                                "The required codec may not be installed on the computer: " +
-                                $"{reader.WaveFormat.Encoding}\n{ex}");
-                        else
-                            _logger.LogError(ex.ToString());
-                    }
-                    catch (Exception ex)
-                    {
+                }
+                catch (NAudio.MmException ex)
+                {
+                    if (ex.Result == NAudio.MmResult.AcmNotPossible)
+                        _logger.LogError($"{oggFilePath.GAC_ToLocalPath()}\n" +
+                            "OGG file conversion error! " +
+                            "The required codec may not be installed on the computer: " +
+                            $"{reader.WaveFormat.Encoding}\n{ex}");
+                    else
                         _logger.LogError(ex.ToString());
-                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
                 }
             }
 

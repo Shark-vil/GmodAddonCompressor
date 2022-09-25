@@ -36,32 +36,32 @@ namespace GmodAddonCompressor.Objects
                 WaveFormat currentFormet = reader.WaveFormat;
                 int rateNumber = AudioContext.RateNumber;
 
-                if (currentFormet.SampleRate > rateNumber)
-                {
-                    Mp3Frame frame = reader.ReadNextFrame();
-                    var newFormat = new Mp3WaveFormat(rateNumber, 1, frame.FrameLength, 16);
+                if (currentFormet.SampleRate <= rateNumber)
+                    return;
 
-                    try
+                Mp3Frame frame = reader.ReadNextFrame();
+                var newFormat = new Mp3WaveFormat(rateNumber, 1, frame.FrameLength, 16);
+
+                try
+                {
+                    using (var c = new WaveFormatConversionStream(newFormat, reader))
                     {
-                        using (var c = new WaveFormatConversionStream(newFormat, reader))
-                        {
-                            WaveFileWriter.CreateWaveFile(newMp3FilePath, c);
-                        }
+                        WaveFileWriter.CreateWaveFile(newMp3FilePath, c);
                     }
-                    catch (NAudio.MmException ex)
-                    {
-                        if (ex.Result == NAudio.MmResult.AcmNotPossible)
-                            _logger.LogError($"{mp3FilePath.GAC_ToLocalPath()}\n" +
-                                "WAV file conversion error! " +
-                                "The required codec may not be installed on the computer: " +
-                                $"{reader.WaveFormat.Encoding}\n{ex}");
-                        else
-                            _logger.LogError(ex.ToString());
-                    }
-                    catch (Exception ex)
-                    {
+                }
+                catch (NAudio.MmException ex)
+                {
+                    if (ex.Result == NAudio.MmResult.AcmNotPossible)
+                        _logger.LogError($"{mp3FilePath.GAC_ToLocalPath()}\n" +
+                            "WAV file conversion error! " +
+                            "The required codec may not be installed on the computer: " +
+                            $"{reader.WaveFormat.Encoding}\n{ex}");
+                    else
                         _logger.LogError(ex.ToString());
-                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
                 }
             }
 
