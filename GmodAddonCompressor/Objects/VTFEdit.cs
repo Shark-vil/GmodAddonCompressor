@@ -45,6 +45,12 @@ namespace GmodAddonCompressor.Objects
 
         public async Task Compress(string vtfFilePath)
         {
+            object? vtfInfoObject = GetVtfFileInfo(vtfFilePath);
+            if (vtfInfoObject == null) return;
+
+            VtfFileModel vtfInfo = (VtfFileModel)vtfInfoObject;
+            if (vtfInfo.Frames > 1) return;
+
             string pngFilePath = vtfFilePath.Substring(0, vtfFilePath.Length - 3);
             pngFilePath += "png";
 
@@ -54,7 +60,7 @@ namespace GmodAddonCompressor.Objects
             if (File.Exists(pngFilePath))
                 File.Delete(pngFilePath);
 
-            await VtfToPng(vtfFilePath);
+            await VtfToPng(vtfInfo, vtfFilePath);
 
             if (!File.Exists(pngFilePath))
                 return;
@@ -68,11 +74,11 @@ namespace GmodAddonCompressor.Objects
             {
                 if (!ImageContext.ImageMagickVTFCompress)
                 {
-                    await OptImageToVtf(pngFilePath);
+                    await OptImageToVtf(vtfInfo, pngFilePath);
                 }
                 else
                 {
-                    await OptImageAndExportToVtf(pngFilePath);
+                    await OptImageAndExportToVtf(vtfInfo, pngFilePath);
 
                     if (File.Exists(vtfFilePath))
                     {
@@ -86,7 +92,7 @@ namespace GmodAddonCompressor.Objects
                     }
 
                     if (!File.Exists(vtfFilePath))
-                        await OptImageToVtf(pngFilePath);
+                        await OptImageToVtf(vtfInfo, pngFilePath);
                 }
             }
             catch (Exception ex)
@@ -118,7 +124,7 @@ namespace GmodAddonCompressor.Objects
             File.Delete(pngFilePath);
         }
 
-        private async Task OptImageAndExportToVtf(string pngFilePath)
+        private async Task OptImageAndExportToVtf(VtfFileModel vtfInfo, string pngFilePath)
         {
             try
             {
@@ -126,7 +132,7 @@ namespace GmodAddonCompressor.Objects
                 if (!isTransparent)
                 {
                     await ImageCompress(pngFilePath);
-                    await ImageToVtf(pngFilePath);
+                    await ImageToVtf(vtfInfo, pngFilePath);
                 }
             }
             catch (Exception ex)
@@ -234,12 +240,12 @@ namespace GmodAddonCompressor.Objects
             }
         }
 
-        private async Task VtfToPng(string vtfFilePath, string vtfDirectory = "")
+        private async Task VtfToPng(VtfFileModel vtfInfo, string vtfFilePath, string vtfDirectory = "")
         {
-            await VtfToImage("png", vtfFilePath, vtfDirectory);
+            await VtfToImage(vtfInfo, "png", vtfFilePath, vtfDirectory);
         }
 
-        private async Task OptImageToVtf(string imageFilePath, string? pngDirectory = null)
+        private async Task OptImageToVtf(VtfFileModel vtfInfo, string imageFilePath, string? pngDirectory = null)
         {
             if (string.IsNullOrEmpty(pngDirectory))
                 pngDirectory = Path.GetDirectoryName(imageFilePath);
@@ -324,11 +330,12 @@ namespace GmodAddonCompressor.Objects
             arguments += $" -file \"{imageFilePath}\"";
             arguments += $" -output \"{pngDirectory}\"";
             arguments += $" -resize -rwidth {imageWidth} -rheight {imageHeight}";
+            arguments += $" -format \"DXT1\" -alphaformat \"DXT5\"";
 
             await StartVtfCmdProcess(arguments);
         }
 
-        private async Task ImageToVtf(string imageFilePath, string? pngDirectory = null)
+        private async Task ImageToVtf(VtfFileModel vtfInfo, string imageFilePath, string? pngDirectory = null)
         {
             if (string.IsNullOrEmpty(pngDirectory))
                 pngDirectory = Path.GetDirectoryName(imageFilePath);
@@ -336,11 +343,12 @@ namespace GmodAddonCompressor.Objects
             string arguments = string.Empty;
             arguments += $" -file \"{imageFilePath}\"";
             arguments += $" -output \"{pngDirectory}\"";
+            arguments += $" -format \"DXT1\" -alphaformat \"DXT5\"";
 
             await StartVtfCmdProcess(arguments);
         }
 
-        private async Task VtfToImage(string fileExtension, string vtfFilePath, string? vtfDirectory = null)
+        private async Task VtfToImage(VtfFileModel vtfInfo, string fileExtension, string vtfFilePath, string? vtfDirectory = null)
         {
             if (string.IsNullOrEmpty(vtfDirectory))
                 vtfDirectory = Path.GetDirectoryName(vtfFilePath);
@@ -349,14 +357,6 @@ namespace GmodAddonCompressor.Objects
             arguments += $" -file \"{vtfFilePath}\"";
             arguments += $" -output \"{vtfDirectory}\"";
             arguments += $" -exportformat \"{fileExtension}\"";
-
-            VtfFileModel? vtfInfo = GetVtfFileInfo(vtfFilePath);
-
-            if (vtfInfo == null)
-                return;
-
-            if (vtfInfo.Frames > 1)
-                return;
 
             int vtfWidth = vtfInfo.Width;
             int vtfHeight = vtfInfo.Height;

@@ -1,6 +1,6 @@
 ﻿namespace GmodAddonCompressor.Models
 {
-    internal class VtfFileModel
+    internal struct VtfFileModel
     {
         public int MajorVersion;
         public int MinorVersion;
