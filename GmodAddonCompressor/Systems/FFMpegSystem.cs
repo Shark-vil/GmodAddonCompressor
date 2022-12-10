@@ -16,6 +16,7 @@ namespace GmodAddonCompressor.Systems
         private const string _mainDirectoryFFMpeg = "ffmpeg";
         private readonly string _ffmpegFilePath;
         private readonly ILogger _logger = LogSystem.CreateLogger<FFMpegSystem>();
+        private const short _bitrate = 16000;
 
         public FFMpegSystem()
         {
@@ -64,7 +65,7 @@ namespace GmodAddonCompressor.Systems
                 await Task.WhenAny(ffMpegProcess.WaitForExitAsync(), Task.Delay(TimeSpan.FromMinutes(2)));
         }
 
-        internal async Task<bool> CompressAudioAsync(string filePath, string outputFilePath, int bitrate)
+        internal async Task<bool> CompressAudioAsync(string filePath, string outputFilePath, int samplingFrequency)
         {
             long oldFileSize = new FileInfo(filePath).Length;
 
@@ -74,7 +75,7 @@ namespace GmodAddonCompressor.Systems
 
             //await StartFFMpegProcess($"-i \"{filePath}\" -ab 16000 -ac 1 -ar {bitrate} {outputFilePath}");
 
-            await StartFFMpegProcess($"-i \"{filePath}\" -ab 16000 -ar {bitrate} {outputFilePath}");
+            await StartFFMpegProcess($"-i \"{filePath}\" -ab {_bitrate} -ar {samplingFrequency} -ac 1 {outputFilePath}");
 
             if (File.Exists(outputFilePath))
             {

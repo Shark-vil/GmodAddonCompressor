@@ -23,7 +23,7 @@ namespace GmodAddonCompressor.Objects
 
             if (AudioContext.UseFFMpegForCompress)
             {
-                bool hasCompress = await new FFMpegSystem().CompressAudioAsync(mp3FilePath, newMp3FilePath, AudioContext.RateNumber);
+                bool hasCompress = await new FFMpegSystem().CompressAudioAsync(mp3FilePath, newMp3FilePath, AudioContext.SamplingFrequency);
                 if (hasCompress)
                 {
                     _logger.LogInformation($"Successful file compression: {mp3FilePath.GAC_ToLocalPath()}");
@@ -34,7 +34,7 @@ namespace GmodAddonCompressor.Objects
             using (var reader = new Mp3FileReader(mp3FilePath))
             {
                 WaveFormat currentFormet = reader.WaveFormat;
-                int rateNumber = AudioContext.RateNumber;
+                int rateNumber = AudioContext.SamplingFrequency;
 
                 if (currentFormet.SampleRate <= rateNumber)
                     return;
@@ -85,7 +85,7 @@ namespace GmodAddonCompressor.Objects
                 }
 
                 if (!hasCompress && AudioContext.UseFFMpegForCompress)
-                    hasCompress = await new FFMpegSystem().CompressAudioAsync(mp3FilePath, newMp3FilePath, AudioContext.RateNumber);
+                    hasCompress = await new FFMpegSystem().CompressAudioAsync(mp3FilePath, newMp3FilePath, AudioContext.SamplingFrequency);
 
                 if (hasCompress)
                     _logger.LogInformation($"Successful file compression: {mp3FilePath.GAC_ToLocalPath()}");

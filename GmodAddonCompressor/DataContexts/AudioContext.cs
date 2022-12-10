@@ -2,16 +2,16 @@
 {
     internal class AudioContext
     {
-        private static int _rateNumber = 22050;
+        private static int _samplingFrequency = 22050;
 
         internal static bool UseFFMpegForCompress;
 
-        internal static int RateNumber
+        internal static int SamplingFrequency
         {
-            get { return _rateNumber; }
+            get { return _samplingFrequency; }
             set
             {
-                _rateNumber = value < 16000 ? 16000 : value > 44100 ? 44100 : value;
+                _samplingFrequency = value < 16000 ? 16000 : value > 44100 ? 44100 : value;
             }
         }
     }
