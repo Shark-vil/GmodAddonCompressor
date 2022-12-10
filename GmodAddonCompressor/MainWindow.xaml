@@ -114,14 +114,14 @@
                         HorizontalAlignment="Left"
                         IsChecked="{Binding CompressOGG}"/>
 
-                    <!--<Separator />-->
+                    <Separator />
 
-                    <!--<CheckBox
+                    <CheckBox
                         Style="{StaticResource DarkCheckBox}"
                         Margin="0, 5, 0, 5"
                         Content="Use &quot;FFMpeg&quot; for compress"
                         HorizontalAlignment="Left"
-                        IsChecked="{Binding UseFFMpegForCompress}"/>-->
+                        IsChecked="{Binding UseFFMpegForCompress}"/>
                 </StackPanel>
 
                 <Label

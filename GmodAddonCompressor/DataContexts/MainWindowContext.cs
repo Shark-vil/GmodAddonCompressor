@@ -18,7 +18,7 @@ namespace GmodAddonCompressor.DataContexts
         private bool _compressJPG = true;
         private bool _compressPNG = true;
         private bool _compressLUA = false;
-        private bool _useFFMpegForCompress = true;
+        private bool _useFFMpegForCompress = false;
         private bool _changeOriginalCodeToMinimalistic = false;
         private bool _reduceExactlyToLimits = false;
         private bool _reduceExactlyToResolution = true;
