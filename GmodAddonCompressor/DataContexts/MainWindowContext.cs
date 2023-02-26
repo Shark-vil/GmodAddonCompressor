@@ -58,10 +58,9 @@ namespace GmodAddonCompressor.DataContexts
         };
         private int[] _wavRateList = new int[]
         {
-            //44100,
-            32000,
+            44100,
             22050,
-            16000
+            11025
         };
 
         public uint ImageSkipHeight
