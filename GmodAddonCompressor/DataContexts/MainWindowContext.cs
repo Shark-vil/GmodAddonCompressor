@@ -1,36 +1,38 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using GmodAddonCompressor.Properties;
 
 namespace GmodAddonCompressor.DataContexts
 {
     internal class MainWindowContext : INotifyPropertyChanged
     {
+        private static Settings Set => Settings.Default;
         private string _addonDirectoryPath = string.Empty;
         private string _progressBarText = string.Empty;
         private int _progressBarMinValue = 0;
         private int _progressBarMaxValue = 100;
         private int _progressBarValue = 0;
-        private bool _unlockedUI = true;
-        private bool _compressVTF = true;
-        private bool _compressWAV = true;
-        private bool _compressMP3 = true;
-        private bool _compressOGG = true;
-        private bool _compressJPG = true;
-        private bool _compressPNG = true;
-        private bool _compressLUA = false;
-        private bool _useFFMpegForCompress = false;
-        private bool _changeOriginalCodeToMinimalistic = false;
-        private bool _reduceExactlyToLimits = false;
-        private bool _reduceExactlyToResolution = true;
-        private bool _keepImageAspectRatio = true;
-        private bool _imageMagickVTFCompress = false;
-        private uint _imageSkipWidth = 0;
-        private uint _imageSkipHeight = 0;
-        private int _wavRate = 22050;
-        private int _wavRateListIndex = 0;
-        private int _imageReducingResolutionListIndex = 0;
-        private int _imageWidthLimitIndex = 10;
-        private int _imageHeightLimitIndex = 10;
+        private bool _unlockedUI = Set._unlockedUI;
+        private bool _compressVTF = Set._compressVTF;
+        private bool _compressWAV = Set._compressWAV;
+        private bool _compressMP3 = Set._compressMP3;
+        private bool _compressOGG = Set._compressOGG;
+        private bool _compressJPG = Set._compressJPG;
+        private bool _compressPNG = Set._compressPNG;
+        private bool _compressLUA = Set._compressLUA;
+        private bool _useFFMpegForCompress = Set._useFFMpegForCompress;
+        private bool _changeOriginalCodeToMinimalistic = Set._changeOriginalCodeToMinimalistic;
+        private bool _reduceExactlyToLimits = Set._reduceExactlyToLimits;
+        private bool _reduceExactlyToResolution = Set._reduceExactlyToResolution;
+        private bool _keepImageAspectRatio = Set._keepImageAspectRatio;
+        private bool _imageMagickVTFCompress = Set._imageMagickVTFCompress;
+        private uint _imageSkipWidth = Set._imageSkipWidth;
+        private uint _imageSkipHeight = Set._imageSkipHeight;
+        private int _wavRate = Set._wavRate;
+        private int _wavRateListIndex = Set._wavRateListIndex;
+        private int _imageReducingResolutionListIndex = Set._imageReducingResolutionListIndex;
+        private int _imageWidthLimitIndex = Set._imageWidthLimitIndex;
+        private int _imageHeightLimitIndex = Set._imageHeightLimitIndex;
         private int[] _imageReducingResolutionList = new int[]
         {
             2,
@@ -69,6 +71,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _imageSkipHeight = value;
+                Set._imageSkipHeight = value;
                 OnPropertyChanged();
             }
         }
@@ -79,6 +82,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _imageSkipWidth = value;
+                Set._imageSkipWidth = value;
                 OnPropertyChanged();
             }
         }
@@ -99,6 +103,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _imageWidthLimitIndex = value;
+                Set._imageWidthLimitIndex = value;
                 OnPropertyChanged();
             }
         }
@@ -109,6 +114,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _imageHeightLimitIndex = value;
+                Set._imageHeightLimitIndex = value;
                 OnPropertyChanged();
             }
         }
@@ -119,6 +125,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _imageReducingResolutionListIndex = value;
+                Set._imageReducingResolutionListIndex = value;
                 OnPropertyChanged();
             }
         }
@@ -139,6 +146,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _wavRateListIndex = value;
+                Set._wavRateListIndex = value;
                 OnPropertyChanged();
             }
         }
@@ -159,6 +167,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _wavRate = value;
+                Set._wavRate = value;
                 OnPropertyChanged();
             }
         }
@@ -169,6 +178,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _imageMagickVTFCompress = value;
+                Set._imageMagickVTFCompress = value;
                 OnPropertyChanged();
             }
         }
@@ -179,6 +189,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _keepImageAspectRatio = value;
+                Set._keepImageAspectRatio = value;
                 OnPropertyChanged();
             }
         }
@@ -189,6 +200,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _reduceExactlyToResolution = value;
+                Set._reduceExactlyToResolution = value;
                 OnPropertyChanged();
             }
         }
@@ -199,6 +211,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _reduceExactlyToLimits = value;
+                Set._reduceExactlyToLimits = value;
                 ReduceExactlyToResolution = !_reduceExactlyToLimits;
                 OnPropertyChanged();
             }
@@ -210,6 +223,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _changeOriginalCodeToMinimalistic = value;
+                Set._changeOriginalCodeToMinimalistic = value;
                 OnPropertyChanged();
             }
         }
@@ -220,6 +234,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _useFFMpegForCompress = value;
+                Set._useFFMpegForCompress = value;
                 OnPropertyChanged();
             }
         }
@@ -230,6 +245,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _compressLUA = value;
+                Set._compressLUA = value;
                 OnPropertyChanged();
             }
         }
@@ -240,6 +256,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _compressPNG = value;
+                Set._compressPNG = value;
                 OnPropertyChanged();
             }
         }
@@ -250,6 +267,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _compressJPG = value;
+                Set._compressJPG = value;
                 OnPropertyChanged();
             }
         }
@@ -260,6 +278,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _compressVTF = value;
+                Set._compressVTF = value;
                 OnPropertyChanged();
             }
         }
@@ -270,6 +289,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _compressOGG = value;
+                Set._compressOGG = value;
                 OnPropertyChanged();
             }
         }
@@ -280,6 +300,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _compressMP3 = value;
+                Set._compressMP3 = value;
                 OnPropertyChanged();
             }
         }
@@ -290,6 +311,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _compressWAV = value;
+                Set._compressWAV = value;
                 OnPropertyChanged();
             }
         }
@@ -300,6 +322,7 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _unlockedUI = value;
+                Set._unlockedUI = value;
                 OnPropertyChanged();
             }
         }
@@ -359,6 +382,7 @@ namespace GmodAddonCompressor.DataContexts
         {
             if (PropertyChanged != null && propertyName != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+                Set.Save();
         }
     }
 }
