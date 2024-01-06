@@ -10,7 +10,7 @@ namespace GmodAddonCompressor
     public partial class MainWindow : Window
     {
         private MainWindowContext _context = new MainWindowContext();
-        private const string _version = "v2.0.4";
+        private const string _version = "v2.0.5";
 
         public MainWindow()
         {
@@ -66,6 +66,7 @@ namespace GmodAddonCompressor
             ImageContext.ReduceExactlyToLimits = _context.ReduceExactlyToLimits;
             ImageContext.KeepImageAspectRatio = _context.KeepImageAspectRatio;
             ImageContext.ImageMagickVTFCompress = _context.ImageMagickVTFCompress;
+            ImageContext.RemoveRedundantAlpha = _context.RemoveRedundantAlpha;
             LuaContext.ChangeOriginalCodeToMinimalistic = _context.ChangeOriginalCodeToMinimalistic;
 
             var compressSystem = new CompressAddonSystem(addonDirectoryPath);
@@ -112,6 +113,16 @@ namespace GmodAddonCompressor
         private void CheckBox_DisableDebugConsole(object sender, RoutedEventArgs e)
         {
             ConsoleHelper.FreeConsole();
+        }
+
+        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void CheckBox_Checked_1(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

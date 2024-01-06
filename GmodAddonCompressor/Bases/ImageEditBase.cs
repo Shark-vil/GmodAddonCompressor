@@ -273,6 +273,9 @@ namespace GmodAddonCompressor.Bases
             {
                 try
                 {
+                    if (ImageContext.RemoveRedundantAlpha)
+                        await RemoveRedundantAlpha(image);
+
                     var size = new MagickGeometry(resizeWidth, resizeHeight);
                     size.IgnoreAspectRatio = isSingleColor ? true : !ImageContext.KeepImageAspectRatio;
 
@@ -333,5 +336,52 @@ namespace GmodAddonCompressor.Bases
                 File.Copy(additionalCompressionFilePath, imageSavePath);
             }
         }
+
+        /*
+         * The Following checks if an alpha is redundant by the alpha's deviation
+         * A Value of 0 or NaN indicates a solid, unused alpha
+         * Alpha is then disabled: drastically reducing filesize
+         */
+        private async Task RemoveRedundantAlpha(MagickImage image)
+        {
+            _logger.LogInformation($"Attempting to remove redundant alphas..");
+            try
+            {
+                if (!image.HasAlpha)
+                    return;
+
+                double dev = GetStandardDeviation(image, PixelChannel.Alpha);
+                if (dev == 0 || Double.IsNaN(dev))
+                {
+                    image.Alpha(AlphaOption.Off);
+                }
+            }
+            catch (Exception ex)
+            {
+                if(ex==null)
+                    _logger.LogError("Something went wrong removing redundant alphas");
+                else
+                    _logger.LogError(ex.ToString());
+            }
+
+        }
+
+        private double GetStandardDeviation(MagickImage image, PixelChannel channel)
+        {
+            // Get the statistics of the alpha channel
+            var statistics = image.Statistics();
+
+            var alphaStatistics = statistics.GetChannel(PixelChannel.Alpha);
+
+            // The StandardDeviation property gives you the standard deviation
+            if (alphaStatistics == null)
+                return -1;
+            else
+                return alphaStatistics.StandardDeviation;
+        }
     }
+
+
 }
+
+

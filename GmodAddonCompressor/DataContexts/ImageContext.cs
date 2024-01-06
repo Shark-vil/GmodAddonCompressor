@@ -10,5 +10,6 @@
         internal static bool ReduceExactlyToLimits;
         internal static bool KeepImageAspectRatio;
         internal static bool ImageMagickVTFCompress;
+        internal static bool RemoveRedundantAlpha;
     }
 }
