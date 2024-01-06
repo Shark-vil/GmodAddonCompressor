@@ -31,16 +31,16 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition></RowDefinition>
-            <RowDefinition Height="35"></RowDefinition>
+            <RowDefinition Height="34.04"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition></ColumnDefinition>
             <ColumnDefinition Width="200"></ColumnDefinition>
-            <ColumnDefinition Width="260"></ColumnDefinition>
-            <ColumnDefinition Width="180"></ColumnDefinition>
+            <ColumnDefinition Width="293"></ColumnDefinition>
+            <ColumnDefinition Width="147"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <Grid Grid.Column="0" Grid.Row="0" Margin="5, 10, 5, 10">
+        <Grid Grid.Column="0" Grid.Row="0" Margin="5,10,5,10">
             <StackPanel Orientation="Vertical">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -88,7 +88,7 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Column="1" Grid.Row="0" Margin="10, 10, 5, 10">
+        <Grid Grid.Column="1" Grid.Row="0" Margin="10,10,5,10">
             <StackPanel Orientation="Vertical">
 
                 <StackPanel Orientation="Vertical">
@@ -140,8 +140,12 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Column="2" Grid.Row="0" Margin="5, 10, 5, 10">
-            <StackPanel Orientation="Vertical">
+        <Grid Grid.Column="2" Grid.Row="0" Margin="5,10,5,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="245*"/>
+                <RowDefinition Height="54*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Orientation="Vertical" Margin="0,0,0,-21" Grid.RowSpan="2">
                 <StackPanel Orientation="Horizontal">
                     <CheckBox
                         Style="{StaticResource DarkCheckBox}"
@@ -261,25 +265,25 @@
                     Margin="5"
                     IsChecked="{Binding ImageMagickVTFCompress}"
                     Style="{StaticResource DarkCheckBox}"
-                    Content="ImageMagick VTF compress (Demo)"/>
+                    Content="ImageMagick VTF compress (Demo)" Checked="CheckBox_Checked_1"/>
+
+                <CheckBox
+                    Margin="5"
+                    IsChecked="{Binding RemoveRedundantAlpha}"
+                    Style="{StaticResource DarkCheckBox}"
+                    Content="Remove Redundant Alpha (ImageMagic needed)&#xD;&#xA;" Width="284" Checked="CheckBox_Checked"/>
+
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Column="3" Grid.Row="0" Margin="5, 10, 5, 10">
+        <Grid Grid.Column="3" Grid.Row="0" Margin="5,10,5,10">
             <StackPanel Orientation="Vertical">
                 <CheckBox
                     Style="{StaticResource DarkCheckBox}"
-                    Margin="20, 5, 0, 5"
                     Content="LUA"
-                    HorizontalAlignment="Left"
                     IsChecked="{Binding CompressLUA}"/>
-
                 <CheckBox
-                    Style="{StaticResource DarkCheckBox}"
-                    Margin="20, 5, 0, 5"
-                    Content="Change original code"
-                    HorizontalAlignment="Left"
-                    IsChecked="{Binding ChangeOriginalCodeToMinimalistic}"/>
+            Style="{StaticResource DarkCheckBox}" IsChecked="{Binding ChangeOriginalCodeToMinimalistic}" Content="Change original code"/>
             </StackPanel>
         </Grid>
 
@@ -303,7 +307,7 @@
 
                 <TextBlock 
                     Style="{StaticResource DarkTextBlock}"
-                    Text="Author: Shark_vil" 
+                    Text="Author: Shark_vil, zeThijs" 
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"/>
             </StackPanel>

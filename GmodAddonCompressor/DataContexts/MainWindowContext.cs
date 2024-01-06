@@ -24,6 +24,7 @@ namespace GmodAddonCompressor.DataContexts
         private bool _reduceExactlyToResolution = true;
         private bool _keepImageAspectRatio = true;
         private bool _imageMagickVTFCompress = false;
+        private bool _removeRedundantAlpha = false;
         private uint _imageSkipWidth = 0;
         private uint _imageSkipHeight = 0;
         private int _wavRate = 22050;
@@ -169,6 +170,16 @@ namespace GmodAddonCompressor.DataContexts
             set
             {
                 _imageMagickVTFCompress = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool RemoveRedundantAlpha
+        {
+            get { return _removeRedundantAlpha; }
+            set
+            {
+                _removeRedundantAlpha = value;
                 OnPropertyChanged();
             }
         }

@@ -8,9 +8,12 @@ using GmodAddonCompressor.Systems;
 using ImageMagick;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace GmodAddonCompressor.Objects
@@ -244,6 +247,7 @@ namespace GmodAddonCompressor.Objects
         {
             await VtfToImage(vtfInfo, "png", vtfFilePath, vtfDirectory);
         }
+
 
         private async Task OptImageToVtf(VtfFileModel vtfInfo, string imageFilePath, string? pngDirectory = null)
         {
